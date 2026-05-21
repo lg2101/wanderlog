@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>wanderlog — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --tc:#C4622D;--tcl:#D4845A;--tcd:#9E4E24;
+      --cr:#F5F0E8;--ch:#211F1C;--chl:#2C2A27;
+      --gd:#D4A84B;--tl:#2D6B7F;--sg:#7A9E7E;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:var(--ch);color:var(--cr);min-height:100vh}
+
+    /* ── HEADER ── */
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 28px;height:56px;background:rgba(14,12,10,.97);
+      border-bottom:1px solid rgba(212,168,75,.15);position:sticky;top:0;z-index:200;
+    }
+    .logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-style:italic}
+    .logo em{color:var(--gd);font-style:normal}
+    .logo span{font-size:.72rem;color:rgba(245,240,232,.35);margin-left:10px;font-style:normal;font-family:'Inter',sans-serif}
+    .hbtns{display:flex;gap:8px;align-items:center}
+    .btn{
+      padding:7px 16px;border-radius:7px;font-size:.78rem;font-weight:500;
+      cursor:pointer;font-family:'Inter',sans-serif;border:none;transition:all .18s;
+    }
+    .btn-ghost{background:rgba(255,255,255,.06);color:rgba(245,240,232,.65);border:1px solid rgba(255,255,255,.08)}
+    .btn-ghost:hover{background:rgba(255,255,255,.1);color:var(--cr)}
+    .btn-primary{background:var(--tc);color:var(--cr)}
+    .btn-primary:hover{background:var(--tcd)}
+    .btn-success{background:#2A5C38;color:#7ECB9A;border:1px solid rgba(126,203,154,.2)}
+    .btn-success:hover{background:#346944}
+    a{color:rgba(245,240,232,.5);font-size:.78rem;text-decoration:none}
+    a:hover{color:var(--cr)}
+    .status{font-size:.72rem;padding:5px 12px;border-radius:6px;margin-left:8px;display:none}
+    .status.on{display:inline-block}
+    .status.ok{background:rgba(42,92,56,.8);color:#7ECB9A}
+    .status.err{background:rgba(140,40,40,.8);color:#F5A0A0}
+
+    /* ── LAYOUT ── */
+    .layout{display:flex;min-height:calc(100vh - 56px)}
+
+    /* ── LEFT PANEL (file + filters) ── */
+    .left{
+      width:260px;flex-shrink:0;background:rgba(14,12,10,.95);
+      border-right:1px solid rgba(212,168,75,.07);
+      padding:18px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;
+    }
+    .section-title{font-size:.6rem;text-transform:uppercase;letter-spacing:.15em;color:rgba(245,240,232,.28);margin-bottom:10px}
+    .file-zone{
+      border:2px dashed rgba(212,168,75,.2);border-radius:10px;padding:18px;
+      text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px;
+    }
+    .file-zone:hover,.file-zone.drag{border-color:var(--gd);background:rgba(212,168,75,.05)}
+    .fz-icon{font-size:1.6rem;margin-bottom:6px}
+    .fz-text{font-size:.75rem;color:rgba(245,240,232,.45);line-height:1.5}
+    .fz-text strong{color:var(--gd);display:block;margin-bottom:3px;font-size:.82rem}
+    #fileInput{display:none}
+
+    .filter-wrap{margin-bottom:14px}
+    .filter-wrap .section-title{margin-bottom:8px}
+    .filter-row{display:flex;flex-direction:column;gap:5px}
+    select,input[type=text]{
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      color:var(--cr);padding:7px 10px;border-radius:7px;font-size:.78rem;
+      font-family:'Inter',sans-serif;outline:none;width:100%;
+    }
+    select:focus,input:focus{border-color:rgba(212,168,75,.35)}
+    option{background:#2C2A27}
+
+    .stats-mini{
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+      border-radius:8px;padding:12px;font-size:.75rem;color:rgba(245,240,232,.55);
+      line-height:1.9;
+    }
+    .stats-mini strong{color:var(--cr);font-weight:600}
+
+    /* ── MAIN (country table) ── */
+    main{flex:1;padding:20px 24px;overflow-x:auto}
+    .main-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .main-bar h2{font-family:'Playfair Display',serif;font-style:italic;font-size:1.15rem;flex:1}
+    .count-badge{font-size:.7rem;color:rgba(245,240,232,.35)}
+
+    table{width:100%;border-collapse:collapse;font-size:.78rem}
+    th{
+      text-align:left;padding:9px 10px;font-size:.6rem;text-transform:uppercase;
+      letter-spacing:.13em;color:rgba(245,240,232,.3);border-bottom:1px solid rgba(255,255,255,.06);
+      font-weight:500;white-space:nowrap;cursor:pointer;user-select:none;
+    }
+    th:hover{color:rgba(245,240,232,.6)}
+    td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+    tr:hover td{background:rgba(255,255,255,.025)}
+
+    .flag{font-size:1rem}
+    .name-cell{font-weight:500;color:rgba(245,240,232,.9)}
+    .cont-pill{
+      font-size:.62rem;padding:2px 8px;border-radius:10px;
+      background:rgba(255,255,255,.06);color:rgba(245,240,232,.5);white-space:nowrap;
+    }
+    .unp-tag{
+      font-size:.58rem;padding:2px 6px;border-radius:8px;
+      background:rgba(45,107,127,.25);color:rgba(74,143,163,.9);
+      border:1px solid rgba(45,107,127,.3);
+    }
+
+    /* visited toggle */
+    .vis-toggle{
+      display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;
+    }
+    .toggle-track{
+      width:34px;height:18px;border-radius:9px;background:rgba(255,255,255,.1);
+      border:1px solid rgba(255,255,255,.12);transition:all .2s;flex-shrink:0;position:relative;
+    }
+    .toggle-track.on{background:var(--tc);border-color:var(--tcd)}
+    .toggle-knob{
+      width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.4);
+      position:absolute;top:2px;left:2px;transition:all .2s;
+    }
+    .toggle-track.on .toggle-knob{left:18px;background:var(--cr)}
+
+    .year-input{
+      width:60px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      color:var(--cr);padding:4px 6px;border-radius:5px;font-size:.75rem;
+      font-family:'Inter',sans-serif;outline:none;text-align:center;
+    }
+    .year-input:focus{border-color:rgba(212,168,75,.35)}
+    .year-input:disabled{opacity:.3;cursor:not-allowed}
+
+    .photos-cell{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .photo-chip{
+      display:flex;align-items:center;gap:4px;
+      background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+      border-radius:5px;padding:3px 7px;font-size:.68rem;color:rgba(245,240,232,.6);
+    }
+    .photo-chip .rm{
+      color:rgba(245,240,232,.3);cursor:pointer;font-size:.7rem;line-height:1;
+      background:none;border:none;padding:0;
+    }
+    .photo-chip .rm:hover{color:#F5A0A0}
+    .add-photo{
+      background:rgba(196,98,45,.08);border:1px dashed rgba(196,98,45,.25);
+      border-radius:5px;padding:3px 8px;font-size:.68rem;color:rgba(196,98,45,.6);
+      cursor:pointer;transition:all .18s;white-space:nowrap;
+    }
+    .add-photo:hover{background:rgba(196,98,45,.15);color:var(--tcl)}
+    .photo-file-input{display:none}
+
+    .notes-input{
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      color:var(--cr);padding:5px 8px;border-radius:6px;font-size:.75rem;
+      font-family:'Inter',sans-serif;resize:none;width:180px;height:36px;
+      outline:none;font-style:italic;
+    }
+    .notes-input:focus{border-color:rgba(212,168,75,.3);height:56px;transition:height .2s}
+
+    /* ── SAVE BANNER ── */
+    .save-banner{
+      position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+      background:rgba(20,18,16,.97);border:1px solid rgba(212,168,75,.25);
+      border-radius:10px;padding:12px 20px;display:flex;align-items:center;gap:12px;
+      font-size:.8rem;color:rgba(245,240,232,.7);z-index:500;opacity:0;pointer-events:none;
+      transition:opacity .2s;
+    }
+    .save-banner.on{opacity:1;pointer-events:auto}
+    .sb-dot{width:7px;height:7px;border-radius:50%;background:var(--gd);animation:pulse 1.2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    /* ── HOW-TO ── */
+    .howto{
+      background:rgba(45,107,127,.1);border:1px solid rgba(45,107,127,.2);
+      border-radius:8px;padding:12px 16px;font-size:.74rem;
+      color:rgba(245,240,232,.5);line-height:1.7;margin-bottom:14px;
+    }
+    .howto strong{color:var(--tl)}
+    .howto ol{padding-left:16px;margin-top:4px}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">wander<em>log</em> <span>— Admin</span></div>
+  <div class="hbtns">
+    <span class="status" id="statusBadge"></span>
+    <a href="index.html">← View Map</a>
+    <button class="btn btn-ghost" onclick="exportJSON()">Export JSON</button>
+    <button class="btn btn-primary" id="saveBtn" onclick="saveToFile()" disabled>Save to File</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- LEFT PANEL -->
+  <div class="left">
+    <div class="section-title" style="margin-bottom:10px">Data File</div>
+
+    <div class="howto">
+      <strong>How to use:</strong>
+      <ol>
+        <li>Click "Open File" and select your <code>data/countries.json</code></li>
+        <li>Mark countries visited, set years, add notes</li>
+        <li>Click "Save to File" to write changes back</li>
+        <li>Reload the map to see updates</li>
+      </ol>
+      <div style="margin-top:6px;color:rgba(245,240,232,.35)">Works in Chrome & Edge (File System Access API). For Firefox, use Export JSON instead.</div>
+    </div>
+
+    <div class="file-zone" id="fileZone" onclick="openFile()">
+      <div class="fz-icon">📂</div>
+      <div class="fz-text">
+        <strong id="fzName">No file loaded</strong>
+        Click to open countries.json
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".json" onchange="loadFromInput(this)">
+
+    <div class="filter-wrap">
+      <div class="section-title">Filter</div>
+      <div class="filter-row">
+        <select id="filterContinent" onchange="renderTable()">
+          <option value="">All Continents</option>
+          <option>Europe</option><option>Asia</option><option>Africa</option>
+          <option>North America</option><option>South America</option>
+          <option>Oceania</option><option>Antarctica</option>
+        </select>
+        <select id="filterVisited" onchange="renderTable()">
+          <option value="">All Status</option>
+          <option value="1">Visited only</option>
+          <option value="0">Not visited</option>
+        </select>
+        <select id="filterUnPlus" onchange="renderTable()">
+          <option value="">UN + UN+</option>
+          <option value="0">UN only (193)</option>
+          <option value="1">UN+ only</option>
+        </select>
+        <input type="text" id="filterSearch" placeholder="Search name…" oninput="renderTable()">
+      </div>
+    </div>
+
+    <div class="stats-mini" id="statsMini">
+      Load a file to see stats.
+    </div>
+  </div>
+
+  <!-- MAIN TABLE -->
+  <main>
+    <div class="main-bar">
+      <h2>Countries</h2>
+      <span class="count-badge" id="tableCount"></span>
+    </div>
+    <div id="tableWrap">
+      <div style="color:rgba(245,240,232,.25);font-size:.85rem;padding:40px 0;text-align:center">
+        Open <code>data/countries.json</code> to start editing.
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Save banner -->
+<div class="save-banner" id="saveBanner">
+  <div class="sb-dot"></div>
+  Unsaved changes
+  <button class="btn btn-primary" onclick="saveToFile()" style="padding:5px 14px;font-size:.74rem">Save now</button>
+</div>
+
+<script>
+let countries = [];
+let dirty = false;
+let fileHandle = null;
+let sortCol = 'name';
+let sortDir = 1;
+
+// ── FILE OPEN ───────────────────────────────────────────────
+async function openFile() {
+  if ('showOpenFilePicker' in window) {
+    try {
+      [fileHandle] = await window.showOpenFilePicker({
+        types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+      });
+      const file = await fileHandle.getFile();
+      await parseFile(file);
+      document.getElementById('saveBtn').disabled = false;
+    } catch (e) {
+      if (e.name !== 'AbortError') fallbackInput();
+    }
+  } else {
+    fallbackInput();
+  }
+}
+
+function fallbackInput() {
+  document.getElementById('fileInput').click();
+}
+
+async function loadFromInput(input) {
+  if (!input.files[0]) return;
+  await parseFile(input.files[0]);
+}
+
+async function parseFile(file) {
+  const text = await file.text();
+  try {
+    const data = JSON.parse(text);
+    countries = data.countries || [];
+    document.getElementById('fzName').textContent = file.name;
+    document.getElementById('fileZone').style.borderColor = 'var(--gd)';
+    renderTable();
+    updateStats();
+    showStatus('File loaded', 'ok');
+  } catch {
+    showStatus('Invalid JSON', 'err');
+  }
+}
+
+// ── SAVE ────────────────────────────────────────────────────
+async function saveToFile() {
+  if (!fileHandle) {
+    exportJSON();
+    return;
+  }
+  try {
+    const writable = await fileHandle.createWritable();
+    await writable.write(buildJSON());
+    await writable.close();
+    dirty = false;
+    document.getElementById('saveBanner').classList.remove('on');
+    showStatus('Saved ✓', 'ok');
+  } catch (e) {
+    showStatus('Save failed', 'err');
+    exportJSON();
+  }
+}
+
+function exportJSON() {
+  const blob = new Blob([buildJSON()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'countries.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showStatus('Exported ✓', 'ok');
+}
+
+function buildJSON() {
+  return JSON.stringify({ meta: { lastUpdated: new Date().toISOString().slice(0,10), unCount: 193, unPlusCount: 265 }, countries }, null, 2);
+}
+
+// ── MARK DIRTY ──────────────────────────────────────────────
+function markDirty() {
+  dirty = true;
+  document.getElementById('saveBanner').classList.add('on');
+  document.getElementById('saveBtn').disabled = false;
+}
+
+// ── TABLE ───────────────────────────────────────────────────
+function getFiltered() {
+  const cont   = document.getElementById('filterContinent').value;
+  const vis    = document.getElementById('filterVisited').value;
+  const unp    = document.getElementById('filterUnPlus').value;
+  const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+  return countries.filter(c => {
+    if (cont && c.continent !== cont) return false;
+    if (vis === '1' && !c.visited) return false;
+    if (vis === '0' && c.visited) return false;
+    if (unp === '0' && c.unPlus) return false;
+    if (unp === '1' && !c.unPlus) return false;
+    if (search && !c.name.toLowerCase().includes(search)) return false;
+    return true;
+  }).sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (sortCol === 'visited') { va = a.visited ? 1 : 0; vb = b.visited ? 1 : 0; }
+    if (typeof va === 'string') return va.localeCompare(vb) * sortDir;
+    return ((va ?? 0) - (vb ?? 0)) * sortDir;
+  });
+}
+
+function renderTable() {
+  const rows = getFiltered();
+  document.getElementById('tableCount').textContent = `${rows.length} countries`;
+
+  const sortArrow = (col) => sortCol === col ? (sortDir === 1 ? ' ↑' : ' ↓') : '';
+
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th onclick="setSort('name')">Country${sortArrow('name')}</th>
+          <th onclick="setSort('continent')">Continent${sortArrow('continent')}</th>
+          <th onclick="setSort('visited')">Visited${sortArrow('visited')}</th>
+          <th onclick="setSort('year')">Year${sortArrow('year')}</th>
+          <th>Photos</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(c => `
+          <tr data-iso3="${c.iso3}">
+            <td>
+              <div style="display:flex;align-items:center;gap:7px">
+                <span class="flag">${flagEmoji(c.iso2)}</span>
+                <span class="name-cell">${c.name}</span>
+                ${c.unPlus ? '<span class="unp-tag">UN+</span>' : ''}
+              </div>
+            </td>
+            <td><span class="cont-pill">${c.continent}</span></td>
+            <td>
+              <div class="vis-toggle" onclick="toggleVisited('${c.iso3}')">
+                <div class="toggle-track${c.visited?' on':''}">
+                  <div class="toggle-knob"></div>
+                </div>
+                <span style="font-size:.72rem;color:${c.visited?'var(--tcl)':'rgba(245,240,232,.3)'}">${c.visited?'Yes':'No'}</span>
+              </div>
+            </td>
+            <td>
+              <input type="number" class="year-input" value="${c.year||''}"
+                min="1900" max="2099" placeholder="—"
+                ${!c.visited?'disabled':''}
+                onchange="setYear('${c.iso3}', this.value)"
+                onkeydown="return event.key!=='e'">
+            </td>
+            <td>
+              <div class="photos-cell" id="photos-${c.iso3}">
+                ${(c.photos||[]).map(fn => `
+                  <div class="photo-chip">
+                    <span>📷 ${fn}</span>
+                    <button class="rm" onclick="removePhoto('${c.iso3}','${fn}')">✕</button>
+                  </div>`).join('')}
+                <label class="add-photo">
+                  + Add
+                  <input type="file" class="photo-file-input" accept="image/*" multiple
+                    onchange="handlePhotos('${c.iso3}', this)">
+                </label>
+              </div>
+            </td>
+            <td>
+              <textarea class="notes-input" placeholder="Notes…"
+                onchange="setNotes('${c.iso3}', this.value)">${c.notes||''}</textarea>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  document.getElementById('tableWrap').innerHTML = html;
+}
+
+function setSort(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  renderTable();
+}
+
+// ── EDIT ACTIONS ────────────────────────────────────────────
+function toggleVisited(iso3) {
+  const c = countries.find(x => x.iso3 === iso3);
+  if (!c) return;
+  c.visited = !c.visited;
+  if (!c.visited) { c.year = null; }
+  markDirty();
+  renderTable();
+  updateStats();
+}
+
+function setYear(iso3, val) {
+  const c = countries.find(x => x.iso3 === iso3);
+  if (!c) return;
+  c.year = val ? parseInt(val, 10) : null;
+  markDirty();
+}
+
+function setNotes(iso3, val) {
+  const c = countries.find(x => x.iso3 === iso3);
+  if (!c) return;
+  c.notes = val.trim();
+  markDirty();
+}
+
+function removePhoto(iso3, fn) {
+  const c = countries.find(x => x.iso3 === iso3);
+  if (!c) return;
+  c.photos = (c.photos || []).filter(p => p !== fn);
+  markDirty();
+  renderTable();
+}
+
+// ── PHOTO UPLOAD ────────────────────────────────────────────
+async function handlePhotos(iso3, input) {
+  const c = countries.find(x => x.iso3 === iso3);
+  if (!c || !input.files.length) return;
+
+  if (!fileHandle) {
+    showStatus('Open data/countries.json first to enable photo saving', 'err');
+    input.value = '';
+    return;
+  }
+
+  // Get directory handle (parent of countries.json = project root)
+  let dirHandle;
+  try {
+    dirHandle = await fileHandle.getParent?.() ?? null;
+  } catch { dirHandle = null; }
+
+  for (const file of input.files) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+    if (dirHandle) {
+      try {
+        // Save file to photos/{ISO3}/filename
+        let photosDir = await dirHandle.getDirectoryHandle('photos', { create: true });
+        let countryDir = await photosDir.getDirectoryHandle(iso3, { create: true });
+        const fh = await countryDir.getFileHandle(safeName, { create: true });
+        const w = await fh.createWritable();
+        await w.write(file);
+        await w.close();
+        showStatus(`Saved ${safeName}`, 'ok');
+      } catch (e) {
+        showStatus(`Could not save file: ${e.message}`, 'err');
+      }
+    }
+
+    if (!(c.photos||[]).includes(safeName)) {
+      c.photos = [...(c.photos||[]), safeName];
+      markDirty();
+    }
+  }
+  input.value = '';
+  renderTable();
+}
+
+// ── STATS ───────────────────────────────────────────────────
+function updateStats() {
+  const total = countries.length;
+  const vis = countries.filter(c => c.visited).length;
+  const conts = [...new Set(countries.filter(c => c.visited).map(c => c.continent))].length;
+  const unOnly = countries.filter(c => !c.unPlus && c.visited).length;
+  document.getElementById('statsMini').innerHTML = `
+    <strong>${vis}</strong> / ${total} visited<br>
+    <strong>${unOnly}</strong> / 193 UN countries<br>
+    <strong>${conts}</strong> continents visited<br>
+    <strong>${countries.filter(c=>c.visited&&(c.photos||[]).length>0).length}</strong> countries with photos
+  `;
+}
+
+// ── FLAG EMOJI ──────────────────────────────────────────────
+function flagEmoji(iso2) {
+  if (!iso2 || iso2 === '--') return '🏳';
+  try {
+    return iso2.toUpperCase().split('').map(c => String.fromCodePoint(0x1F1E6 - 65 + c.charCodeAt(0))).join('');
+  } catch { return '🏳'; }
+}
+
+// ── STATUS TOAST ────────────────────────────────────────────
+let statusTimer;
+function showStatus(msg, type) {
+  const el = document.getElementById('statusBadge');
+  el.textContent = msg;
+  el.className = `status on ${type}`;
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => el.classList.remove('on'), 3000);
+}
+
+// ── KEYBOARD SHORTCUT ───────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (dirty) saveToFile();
+  }
+});
+</script>
+</body>
+</html>

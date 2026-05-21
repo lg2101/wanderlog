@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>wanderlog</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --tc:   #C4622D;
+      --tcl:  #D4845A;
+      --tcd:  #9E4E24;
+      --tl:   #2D6B7F;
+      --cr:   #F5F0E8;
+      --ch:   #211F1C;
+      --chl:  #2C2A27;
+      --gd:   #D4A84B;
+      --gdl:  #E8C870;
+      --oc:   #172B38;
+      --lb:   #3A3530;
+      --vis:  #C4622D;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:'Inter',sans-serif;background:var(--ch);color:var(--cr);display:flex;flex-direction:column}
+
+    /* ── HEADER ── */
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 28px;height:56px;
+      background:rgba(14,12,10,.97);
+      border-bottom:1px solid rgba(212,168,75,.15);
+      flex-shrink:0;z-index:200;
+    }
+    .logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-style:italic;letter-spacing:.03em}
+    .logo em{color:var(--gd);font-style:normal}
+    .h-stats{display:flex;gap:24px;align-items:center}
+    .stat{text-align:center}
+    .stat-n{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--tcl);line-height:1}
+    .stat-l{font-size:.58rem;text-transform:uppercase;letter-spacing:.14em;color:rgba(245,240,232,.35);margin-top:2px}
+    .sdiv{width:1px;height:24px;background:rgba(212,168,75,.1)}
+    .nav{display:flex;gap:2px;background:rgba(255,255,255,.04);padding:3px;border-radius:9px;border:1px solid rgba(255,255,255,.06)}
+    .nav a{
+      display:block;padding:5px 15px;border-radius:7px;font-size:.76rem;font-weight:500;
+      cursor:pointer;color:rgba(245,240,232,.45);text-decoration:none;transition:all .18s;
+    }
+    .nav a:hover{color:rgba(245,240,232,.75)}
+    .nav a.active{background:var(--tc);color:var(--cr);box-shadow:0 2px 8px rgba(196,98,45,.3)}
+
+    /* ── LAYOUT ── */
+    .layout{display:flex;flex:1;overflow:hidden}
+
+    /* ── SIDEBAR ── */
+    aside{
+      width:260px;background:rgba(14,12,10,.96);
+      border-right:1px solid rgba(212,168,75,.07);
+      overflow-y:auto;flex-shrink:0;
+      scrollbar-width:thin;scrollbar-color:rgba(212,168,75,.18) transparent;
+    }
+    aside::-webkit-scrollbar{width:3px}
+    aside::-webkit-scrollbar-thumb{background:rgba(212,168,75,.18);border-radius:2px}
+    .sb-hdr{
+      padding:13px 18px 10px;font-size:.58rem;
+      text-transform:uppercase;letter-spacing:.16em;
+      color:rgba(245,240,232,.22);border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .cgroup{border-bottom:1px solid rgba(255,255,255,.04)}
+    .chdr{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 16px;cursor:pointer;transition:background .15s;user-select:none;
+    }
+    .chdr:hover{background:rgba(255,255,255,.025)}
+    .chdr-left{display:flex;align-items:center;gap:9px}
+    .cicon{font-size:.95rem}
+    .cname{font-family:'Playfair Display',serif;font-size:.85rem;font-style:italic;letter-spacing:.04em}
+    .ring-wrap{position:relative;width:36px;height:36px;flex-shrink:0}
+    .ring-wrap svg{transform:rotate(-90deg);position:absolute;inset:0}
+    .ring-txt{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-size:.52rem;font-weight:600;color:var(--tcl);line-height:1.2;text-align:center;
+    }
+    .clist{max-height:0;overflow:hidden;transition:max-height .28s ease}
+    .clist.open{max-height:1200px}
+    .clist-inner{padding:4px 10px 10px}
+    .ci{
+      display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:6px;
+      cursor:pointer;font-size:.75rem;color:rgba(245,240,232,.45);transition:all .12s;
+    }
+    .ci:hover{background:rgba(255,255,255,.05);color:var(--cr)}
+    .ci.v{color:rgba(245,240,232,.88)}
+    .ci.v:hover{background:rgba(196,98,45,.1)}
+    .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.11)}
+    .dot.v{background:var(--tc);border-color:var(--tcd)}
+    .cy{margin-left:auto;font-size:.64rem;color:rgba(245,240,232,.25)}
+    .ci.unp{opacity:.65}
+    .ci.unp.hidden-unp{display:none}
+
+    /* ── MAP ── */
+    .map-wrap{flex:1;position:relative;overflow:hidden;background:var(--oc)}
+    #map{width:100%;height:100%;display:block}
+    .cp{fill:var(--lb);stroke:rgba(14,12,10,.8);stroke-width:.4;cursor:pointer;transition:fill .18s}
+    .cp:hover{fill:var(--gdl) !important}
+    .cp.v{fill:var(--vis)}
+    .grat{fill:none;stroke:rgba(255,255,255,.03);stroke-width:.5}
+    .sph{fill:var(--oc)}
+
+    /* ── TOOLTIP ── */
+    #tt{
+      position:absolute;background:rgba(14,12,10,.95);border:1px solid rgba(212,168,75,.22);
+      color:var(--cr);padding:7px 13px;border-radius:7px;font-size:.78rem;
+      pointer-events:none;opacity:0;transition:opacity .12s;white-space:nowrap;z-index:300;
+    }
+    #tt.on{opacity:1}
+    .tt-n{font-family:'Playfair Display',serif;font-size:.88rem}
+    .tt-v{font-size:.66rem;color:var(--tcl);margin-top:2px}
+
+    /* ── MAP CONTROLS ── */
+    .map-top{
+      position:absolute;top:16px;left:50%;transform:translateX(-50%);
+      display:flex;align-items:center;gap:8px;z-index:100;
+    }
+    .search{
+      background:rgba(14,12,10,.92);border:1px solid rgba(212,168,75,.18);
+      border-radius:22px;padding:7px 17px;display:flex;align-items:center;gap:8px;width:220px;
+    }
+    .search input{
+      background:none;border:none;outline:none;color:var(--cr);
+      font-size:.8rem;width:100%;font-family:'Inter',sans-serif;
+    }
+    .search input::placeholder{color:rgba(245,240,232,.25)}
+    .si{color:rgba(245,240,232,.28);font-size:.8rem}
+    .ptog{
+      background:rgba(14,12,10,.92);border:1px solid rgba(212,168,75,.18);
+      border-radius:8px;display:flex;overflow:hidden;
+    }
+    .pb{
+      padding:7px 13px;font-size:.74rem;font-family:'Inter',sans-serif;
+      cursor:pointer;color:rgba(245,240,232,.4);background:none;border:none;transition:all .18s;
+    }
+    .pb:hover{color:var(--cr)}
+    .pb.active{background:var(--tc);color:var(--cr)}
+
+    /* ── LEGEND ── */
+    .legend{
+      position:absolute;bottom:20px;left:20px;
+      background:rgba(14,12,10,.9);border:1px solid rgba(212,168,75,.1);
+      padding:12px 15px;border-radius:10px;z-index:100;
+    }
+    .leg-t{font-size:.57rem;text-transform:uppercase;letter-spacing:.15em;color:rgba(245,240,232,.28);margin-bottom:8px}
+    .leg-r{display:flex;align-items:center;gap:8px;font-size:.71rem;color:rgba(245,240,232,.55);margin-bottom:4px}
+    .leg-s{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+    /* ── UN TOGGLE ── */
+    .untog{
+      position:absolute;bottom:20px;right:20px;
+      background:rgba(14,12,10,.9);border:1px solid rgba(212,168,75,.1);
+      border-radius:8px;display:flex;overflow:hidden;font-size:.71rem;z-index:100;
+    }
+    .ub{padding:7px 13px;cursor:pointer;color:rgba(245,240,232,.38);transition:all .18s}
+    .ub:hover{color:var(--cr)}
+    .ub.active{background:var(--tl);color:var(--cr)}
+
+    /* ── DETAIL PANEL ── */
+    .panel{
+      position:absolute;right:0;top:0;bottom:0;width:350px;
+      background:rgba(14,12,10,.97);border-left:1px solid rgba(212,168,75,.1);
+      transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
+      overflow-y:auto;z-index:150;
+      scrollbar-width:thin;scrollbar-color:rgba(212,168,75,.18) transparent;
+    }
+    .panel.open{transform:translateX(0)}
+    .phero{position:relative;height:175px;overflow:hidden}
+    .phero-bg{width:100%;height:100%;display:block}
+    .phero-ov{
+      position:absolute;inset:0;
+      background:linear-gradient(to top,rgba(14,12,10,.92) 0%,rgba(14,12,10,.2) 65%,transparent 100%);
+    }
+    .phero-info{position:absolute;bottom:0;left:0;right:0;padding:14px 18px}
+    .p-flag{font-size:1.3rem;margin-bottom:3px}
+    .p-name{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:700;line-height:1.1}
+    .p-cont{font-size:.64rem;text-transform:uppercase;letter-spacing:.13em;color:rgba(245,240,232,.38);margin-top:3px}
+    .pclose{
+      position:absolute;top:10px;right:10px;background:rgba(0,0,0,.45);
+      border:none;color:var(--cr);width:27px;height:27px;border-radius:50%;
+      cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;
+      transition:background .15s;
+    }
+    .pclose:hover{background:rgba(0,0,0,.7)}
+    .pbody{padding:16px 18px}
+    .pmeta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:18px}
+    .pmc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:7px;padding:9px 11px}
+    .pml{font-size:.58rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(245,240,232,.28);margin-bottom:3px}
+    .pmv{font-size:.83rem;color:var(--cr);font-weight:500}
+    .sl{font-size:.58rem;text-transform:uppercase;letter-spacing:.13em;color:rgba(245,240,232,.28);margin-bottom:8px}
+    .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:18px}
+    .pthumb{aspect-ratio:1;border-radius:6px;overflow:hidden;cursor:pointer;position:relative}
+    .pthumb img{width:100%;height:100%;object-fit:cover;transition:transform .18s;display:block}
+    .pthumb:hover img{transform:scale(1.06)}
+    .pnotes{
+      background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);
+      border-radius:7px;padding:11px;font-size:.78rem;color:rgba(245,240,232,.55);
+      line-height:1.6;font-style:italic;min-height:56px;
+    }
+    .pnotes:empty::before{content:'No notes yet.';color:rgba(245,240,232,.2)}
+    .pbadge{
+      display:inline-flex;align-items:center;gap:5px;padding:5px 11px;
+      border-radius:20px;font-size:.7rem;font-weight:500;margin-bottom:15px;
+    }
+    .pbadge.v{background:rgba(196,98,45,.15);color:var(--tcl);border:1px solid rgba(196,98,45,.22)}
+    .pbadge.u{background:rgba(255,255,255,.04);color:rgba(245,240,232,.35);border:1px solid rgba(255,255,255,.07)}
+
+    /* ── PHOTO LIGHTBOX ── */
+    .lbox{
+      position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;
+      display:none;align-items:center;justify-content:center;
+    }
+    .lbox.on{display:flex}
+    .lbox img{max-width:90vw;max-height:90vh;border-radius:8px;object-fit:contain}
+    .lbox-close{
+      position:absolute;top:20px;right:24px;background:none;border:none;
+      color:rgba(245,240,232,.7);font-size:1.6rem;cursor:pointer;
+    }
+
+    /* ── STATS VIEW ── */
+    .stats-view{
+      position:absolute;inset:0;background:rgba(14,12,10,.97);
+      z-index:120;overflow-y:auto;display:none;padding:28px;
+    }
+    .stats-view.on{display:block}
+    .sv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;max-width:860px;margin:0 auto}
+    .sv-card{background:rgba(255,255,255,.04);border:1px solid rgba(212,168,75,.09);border-radius:11px;padding:18px}
+    .sv-title{font-family:'Playfair Display',serif;font-style:italic;font-size:1rem;margin-bottom:13px}
+    .cbr{display:flex;align-items:center;gap:9px;font-size:.74rem;margin-bottom:7px}
+    .cbr-n{width:88px;color:rgba(245,240,232,.5)}
+    .cbr-t{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+    .cbr-f{height:100%;background:var(--tc);border-radius:3px;transition:width .6s ease}
+    .cbr-c{font-size:.65rem;color:rgba(245,240,232,.3);width:36px;text-align:right}
+
+    /* ── MISC ── */
+    @media(max-width:680px){
+      aside{display:none}
+      .map-top{top:10px}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">wander<em>log</em></div>
+  <div class="h-stats">
+    <div class="stat"><div class="stat-n" id="hCount">0</div><div class="stat-l">Countries</div></div>
+    <div class="sdiv"></div>
+    <div class="stat"><div class="stat-n" id="hConts">0</div><div class="stat-l">Continents</div></div>
+    <div class="sdiv"></div>
+    <div class="stat"><div class="stat-n" id="hPct">0%</div><div class="stat-l">of World</div></div>
+  </div>
+  <nav class="nav">
+    <a class="active" data-view="map">Map</a>
+    <a data-view="stats">Stats</a>
+    <a href="admin.html">✎ Edit</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside id="sidebar"></aside>
+
+  <div class="map-wrap" id="mapWrap">
+    <svg id="map"></svg>
+
+    <div class="map-top">
+      <div class="search">
+        <span class="si">⌕</span>
+        <input id="search" type="text" placeholder="Search countries…">
+      </div>
+      <div class="ptog">
+        <button class="pb active" data-proj="natural">Flat</button>
+        <button class="pb" data-proj="ortho">Globe</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="leg-t">Status</div>
+      <div class="leg-r"><div class="leg-s" style="background:#C4622D"></div>Visited</div>
+      <div class="leg-r"><div class="leg-s" style="background:#3A3530"></div>Not yet</div>
+    </div>
+
+    <div class="untog">
+      <div class="ub active" data-un="193">193 UN</div>
+      <div class="ub" data-un="265">265 UN+</div>
+    </div>
+
+    <div id="tt"></div>
+
+    <!-- Detail panel -->
+    <div class="panel" id="panel">
+      <div class="phero">
+        <div id="p-bg" class="phero-bg"></div>
+        <div class="phero-ov"></div>
+        <div class="phero-info">
+          <div class="p-flag" id="p-flag">🏳</div>
+          <div class="p-name" id="p-name"></div>
+          <div class="p-cont" id="p-cont"></div>
+        </div>
+        <button class="pclose" onclick="closePanel()">✕</button>
+      </div>
+      <div class="pbody">
+        <div class="pbadge u" id="p-badge">Not yet visited</div>
+        <div class="pmeta" id="p-meta">
+          <div class="pmc"><div class="pml">Year</div><div class="pmv" id="p-year">—</div></div>
+          <div class="pmc"><div class="pml">Photos</div><div class="pmv" id="p-photoc">0</div></div>
+          <div class="pmc"><div class="pml">Continent</div><div class="pmv" id="p-cont2"></div></div>
+        </div>
+        <div class="sl">Photos</div>
+        <div class="pgrid" id="p-photos"></div>
+        <div class="sl" style="margin-top:4px">Notes</div>
+        <div class="pnotes" id="p-notes"></div>
+      </div>
+    </div>
+
+    <!-- Stats overlay -->
+    <div class="stats-view" id="statsView"></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lbox" id="lbox" onclick="closeLbox()">
+  <img id="lbox-img" src="" alt="">
+  <button class="lbox-close" onclick="closeLbox()">✕</button>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────
+let countries = [];
+let showUnPlus = false;
+let worldCache = null;
+let currentProj = 'natural';
+const TOTAL_UN = 193;
+const TOTAL_UNPLUS = 265;
+
+async function init() {
+  const r = await fetch('data/countries.json');
+  const data = await r.json();
+  countries = data.countries;
+  buildSidebar();
+  updateHeader();
+  await loadMap();
+}
+
+// ── HEADER STATS ────────────────────────────────────────────
+function updateHeader() {
+  const vis = countries.filter(c => c.visited && (!c.unPlus || showUnPlus));
+  const conts = [...new Set(vis.map(c => c.continent))].length;
+  const total = showUnPlus ? TOTAL_UNPLUS : TOTAL_UN;
+  document.getElementById('hCount').textContent = vis.length;
+  document.getElementById('hConts').textContent = conts;
+  document.getElementById('hPct').textContent = Math.round(vis.length / total * 100) + '%';
+}
+
+// ── SIDEBAR ─────────────────────────────────────────────────
+const CONTINENT_ORDER = ['Europe','Asia','Africa','North America','South America','Oceania','Antarctica'];
+const CONTINENT_ICONS = {Europe:'🌍',Asia:'🌏',Africa:'🌍','North America':'🌎','South America':'🌎',Oceania:'🌏',Antarctica:'🧊'};
+
+function buildSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.innerHTML = '<div class="sb-hdr">Countries by Continent</div>';
+
+  CONTINENT_ORDER.forEach(cont => {
+    const all = countries.filter(c => c.continent === cont && (!c.unPlus || showUnPlus));
+    if (!all.length) return;
+    all.sort((a, b) => a.name.localeCompare(b.name));
+    const vis = all.filter(c => c.visited).length;
+    const pct = all.length ? vis / all.length : 0;
+    const circ = 2 * Math.PI * 15;
+    const dash = circ * pct;
+
+    const group = document.createElement('div');
+    group.className = 'cgroup';
+    group.innerHTML = `
+      <div class="chdr" onclick="toggleC(this)">
+        <div class="chdr-left">
+          <span class="cicon">${CONTINENT_ICONS[cont]||'🌐'}</span>
+          <span class="cname">${cont}</span>
+        </div>
+        <div class="ring-wrap">
+          <svg viewBox="0 0 36 36" width="36" height="36">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="3.5"/>
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#C4622D" stroke-width="3.5"
+              stroke-dasharray="${circ}" stroke-dashoffset="${circ - dash}" stroke-linecap="round"/>
+          </svg>
+          <div class="ring-txt">${vis}<br>/ ${all.length}</div>
+        </div>
+      </div>
+      <div class="clist${cont === 'Europe' ? ' open' : ''}">
+        <div class="clist-inner">
+          ${all.map(c => `
+            <div class="ci${c.visited?' v':''}" data-iso3="${c.iso3}" onclick="openPanel('${c.iso3}')">
+              <div class="dot${c.visited?' v':''}"></div>
+              <span>${flagEmoji(c.iso2)} ${c.name}</span>
+              ${c.visited && c.year ? `<span class="cy">${c.year}</span>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    sb.appendChild(group);
+  });
+}
+
+function flagEmoji(iso2) {
+  if (!iso2 || iso2 === '--') return '';
+  try {
+    return iso2.toUpperCase().split('').map(c => String.fromCodePoint(0x1F1E6 - 65 + c.charCodeAt(0))).join('');
+  } catch { return ''; }
+}
+
+function toggleC(el) {
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// ── MAP ─────────────────────────────────────────────────────
+const visById = () => new Set(countries.filter(c => c.visited).map(c => c.id).filter(Boolean));
+
+async function loadMap() {
+  if (!worldCache) {
+    worldCache = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+  }
+  renderMap();
+}
+
+function renderMap() {
+  const wrap = document.getElementById('mapWrap');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const svg = d3.select('#map').attr('width', W).attr('height', H);
+  svg.selectAll('*').remove();
+
+  const visited = visById();
+  let proj;
+  if (currentProj === 'natural') {
+    proj = d3.geoNaturalEarth1().scale(W / 6.3).translate([W/2, H/2]);
+  } else {
+    proj = d3.geoOrthographic().scale(Math.min(W,H)/2.2).translate([W/2, H/2]).rotate([-15,-30]);
+  }
+  const path = d3.geoPath().projection(proj);
+
+  svg.append('path').datum({type:'Sphere'}).attr('class','sph').attr('d', path);
+  svg.append('path').datum(d3.geoGraticule()()).attr('class','grat').attr('d', path);
+
+  const features = topojson.feature(worldCache, worldCache.objects.countries).features;
+  const tt = document.getElementById('tt');
+
+  svg.selectAll('.cp')
+    .data(features)
+    .enter().append('path')
+    .attr('class', d => 'cp' + (visited.has(d.id) ? ' v' : ''))
+    .attr('d', path)
+    .on('mousemove', (ev, d) => {
+      const c = countries.find(x => x.id === d.id);
+      if (!c) return;
+      tt.innerHTML = `<div class="tt-n">${flagEmoji(c.iso2)} ${c.name}</div>${c.visited ? '<div class="tt-v">✓ Visited</div>' : ''}`;
+      tt.style.left = (ev.offsetX + 15) + 'px';
+      tt.style.top  = (ev.offsetY - 10) + 'px';
+      tt.classList.add('on');
+    })
+    .on('mouseleave', () => tt.classList.remove('on'))
+    .on('click', (_, d) => {
+      const c = countries.find(x => x.id === d.id);
+      if (c) openPanel(c.iso3);
+    });
+
+  // Globe drag
+  if (currentProj === 'ortho') {
+    let r0, p0;
+    svg.call(d3.drag()
+      .on('start', ev => { r0 = proj.rotate(); p0 = [ev.x, ev.y]; })
+      .on('drag', ev => {
+        proj.rotate([r0[0] + (ev.x - p0[0]) * .4, r0[1] - (ev.y - p0[1]) * .4]);
+        svg.selectAll('.cp').attr('d', path);
+        svg.selectAll('.grat').attr('d', path);
+        svg.selectAll('.sph').attr('d', path);
+      })
+    );
+  }
+}
+
+// ── DETAIL PANEL ────────────────────────────────────────────
+let currentISO3 = null;
+
+function openPanel(iso3) {
+  const c = countries.find(x => x.iso3 === iso3);
+  if (!c) return;
+  currentISO3 = iso3;
+
+  const colors = ['#8B3A1E','#1E3D5C','#2A4A30','#4A3520','#1C3340'];
+  const ci = Math.abs([...iso3].reduce((a,ch) => a + ch.charCodeAt(0), 0)) % colors.length;
+  document.getElementById('p-bg').style.background =
+    `linear-gradient(135deg, ${colors[ci]} 0%, #1A2030 100%)`;
+  document.getElementById('p-flag').textContent = flagEmoji(c.iso2) || '🏳';
+  document.getElementById('p-name').textContent = c.name;
+  document.getElementById('p-cont').textContent = c.continent;
+  document.getElementById('p-cont2').textContent = c.continent;
+  document.getElementById('p-year').textContent = c.year || '—';
+  document.getElementById('p-photoc').textContent = (c.photos || []).length;
+  document.getElementById('p-notes').textContent = c.notes || '';
+
+  const badge = document.getElementById('p-badge');
+  if (c.visited) {
+    badge.textContent = '✓ Visited';
+    badge.className = 'pbadge v';
+  } else {
+    badge.textContent = 'Not yet visited';
+    badge.className = 'pbadge u';
+  }
+
+  const grid = document.getElementById('p-photos');
+  grid.innerHTML = '';
+  (c.photos || []).forEach(fn => {
+    const path = `photos/${c.iso3}/${fn}`;
+    const d = document.createElement('div');
+    d.className = 'pthumb';
+    d.innerHTML = `<img src="${path}" alt="" loading="lazy">`;
+    d.onclick = () => openLbox(path);
+    grid.appendChild(d);
+  });
+
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  currentISO3 = null;
+}
+
+// ── LIGHTBOX ────────────────────────────────────────────────
+function openLbox(src) {
+  document.getElementById('lbox-img').src = src;
+  document.getElementById('lbox').classList.add('on');
+}
+function closeLbox() { document.getElementById('lbox').classList.remove('on'); }
+
+// ── STATS VIEW ──────────────────────────────────────────────
+function buildStats() {
+  const sv = document.getElementById('statsView');
+  const base = countries.filter(c => !c.unPlus || showUnPlus);
+  const vis  = base.filter(c => c.visited);
+  const total = showUnPlus ? TOTAL_UNPLUS : TOTAL_UN;
+
+  const byContinent = {};
+  CONTINENT_ORDER.forEach(co => {
+    const all = base.filter(c => c.continent === co);
+    const v   = all.filter(c => c.visited).length;
+    byContinent[co] = { all: all.length, v };
+  });
+
+  const byYear = {};
+  vis.filter(c => c.year).forEach(c => { byYear[c.year] = (byYear[c.year]||0)+1; });
+  const years = Object.keys(byYear).sort();
+  const maxY = Math.max(...Object.values(byYear), 1);
+
+  sv.innerHTML = `
+    <h2 style="font-family:'Playfair Display',serif;font-style:italic;font-size:1.5rem;margin-bottom:22px;color:var(--cr)">Statistics</h2>
+    <div class="sv-grid">
+      <div class="sv-card">
+        <div class="sv-title">Progress by Continent</div>
+        ${CONTINENT_ORDER.map(co => {
+          const d = byContinent[co];
+          if (!d || !d.all) return '';
+          return `<div class="cbr">
+            <span class="cbr-n">${co.replace('North ','N.').replace('South ','S.')}</span>
+            <div class="cbr-t"><div class="cbr-f" style="width:${d.all?Math.round(d.v/d.all*100):0}%"></div></div>
+            <span class="cbr-c">${d.v}/${d.all}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="sv-card">
+        <div class="sv-title">Overview</div>
+        <div style="font-size:3rem;font-family:'Playfair Display',serif;font-weight:700;color:var(--tcl);line-height:1">${vis.length}</div>
+        <div style="font-size:.7rem;color:rgba(245,240,232,.4);text-transform:uppercase;letter-spacing:.12em;margin-bottom:14px">countries visited</div>
+        <div style="font-size:.82rem;color:rgba(245,240,232,.55);line-height:1.8">
+          <span style="color:var(--cr)">${Math.round(vis.length/total*100)}%</span> of ${total} ${showUnPlus?'UN+':'UN'} countries<br>
+          <span style="color:var(--cr)">${[...new Set(vis.map(c=>c.continent))].length}</span> of 7 continents<br>
+          ${vis.filter(c=>c.photos?.length).length} countries with photos
+        </div>
+      </div>
+      ${years.length ? `
+      <div class="sv-card" style="grid-column:span 2">
+        <div class="sv-title">Visits by Year</div>
+        <div style="display:flex;gap:4px;align-items:flex-end;height:52px;margin-top:6px">
+          ${years.map(y => `
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+              <div style="width:100%;background:var(--tc);border-radius:3px 3px 0 0;height:${Math.round(byYear[y]/maxY*100)}%"></div>
+              <div style="font-size:.56rem;color:rgba(245,240,232,.28)">${y}</div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+    </div>`;
+}
+
+// ── SEARCH ──────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.ci').forEach(el => {
+    el.style.display = (!q || el.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+});
+
+// ── PROJECTION TOGGLE ───────────────────────────────────────
+document.querySelectorAll('.pb').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.pb').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentProj = this.dataset.proj;
+    renderMap();
+  });
+});
+
+// ── UN TOGGLE ───────────────────────────────────────────────
+document.querySelectorAll('.ub').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.ub').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    showUnPlus = this.dataset.un === '265';
+    buildSidebar();
+    updateHeader();
+    if (document.getElementById('statsView').classList.contains('on')) buildStats();
+  });
+});
+
+// ── NAV TABS ────────────────────────────────────────────────
+document.querySelectorAll('.nav a[data-view]').forEach(tab => {
+  tab.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.querySelectorAll('.nav a').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    const sv = document.getElementById('statsView');
+    if (this.dataset.view === 'stats') { buildStats(); sv.classList.add('on'); }
+    else sv.classList.remove('on');
+  });
+});
+
+// ── RESIZE ──────────────────────────────────────────────────
+window.addEventListener('resize', renderMap);
+
+init();
+</script>
+</body>
+</html>
