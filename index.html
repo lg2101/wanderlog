@@ -562,26 +562,120 @@ async function loadMap() {
 
 let mapZoom = null;  // D3 zoom behavior, kept for buttons
 
-// Coordinates for countries WITHOUT ISO numeric IDs (small territories, de facto states, subdivisions)
-// These get rendered as clickable circle markers since the world TopoJSON has no shapes for them
+// Coordinates for countries that need clickable markers on the map.
+// Includes: entries without ISO numeric IDs (territories, de facto states) + small countries that are
+// too tiny to see at world-map scale (Pacific islands, microstates, Caribbean nations).
 const customCoords = {
-    'XKX': { lon: 20.9, lat: 42.6 },     // Kosovo
-    'ABK': { lon: 41.0, lat: 43.0 },     // Abkhazia
-    'OSE': { lon: 44.0, lat: 42.3 },     // South Ossetia
-    'TRS': { lon: 29.5, lat: 47.2 },     // Transnistria
-    'SOM': { lon: 45.5, lat: 9.5 },      // Somaliland
-    'NCY': { lon: 33.4, lat: 35.3 },     // Northern Cyprus
-    'NKO': { lon: 46.7, lat: 39.8 },     // Nagorno-Karabakh
-    'ASC': { lon: -14.36, lat: -7.95 },  // Ascension Island
-    'TAA': { lon: -12.3, lat: -37.1 },   // Tristan da Cunha
-    'EAS': { lon: -109.4, lat: -27.1 },  // Easter Island
-    'GAL': { lon: -90.97, lat: -0.95 },  // Galápagos
-    'HAW': { lon: -156.7, lat: 20.7 },   // Hawaii
-    'CNR': { lon: -15.5, lat: 28.3 },    // Canary Islands
-    'MAD': { lon: -17.0, lat: 32.75 },   // Madeira
-    'AZO': { lon: -28.0, lat: 38.0 },    // Azores
-    'SIC': { lon: 14.0, lat: 37.6 },     // Sicily
-    'SRD': { lon: 9.1, lat: 40.1 }       // Sardinia
+    // De facto / disputed states (no map shape)
+    'XKX': { lon: 20.9, lat: 42.6 },      // Kosovo
+    'ABK': { lon: 41.0, lat: 43.0 },      // Abkhazia
+    'OSE': { lon: 44.0, lat: 42.3 },      // South Ossetia
+    'TRS': { lon: 29.5, lat: 47.2 },      // Transnistria
+    'SOM': { lon: 45.5, lat: 9.5 },       // Somaliland
+    'NCY': { lon: 33.4, lat: 35.3 },      // Northern Cyprus
+    'NKO': { lon: 46.7, lat: 39.8 },      // Nagorno-Karabakh
+    // Subdivisions
+    'ASC': { lon: -14.36, lat: -7.95 },   // Ascension Island
+    'TAA': { lon: -12.3, lat: -37.1 },    // Tristan da Cunha
+    'EAS': { lon: -109.4, lat: -27.1 },   // Easter Island
+    'GAL': { lon: -90.97, lat: -0.95 },   // Galápagos
+    'HAW': { lon: -156.7, lat: 20.7 },    // Hawaii
+    'CNR': { lon: -15.5, lat: 28.3 },     // Canary Islands
+    'MAD': { lon: -17.0, lat: 32.75 },    // Madeira
+    'AZO': { lon: -28.0, lat: 38.0 },     // Azores
+    'SIC': { lon: 14.0, lat: 37.6 },      // Sicily
+    'SRD': { lon: 9.1, lat: 40.1 },       // Sardinia
+
+    // ─── PACIFIC ISLAND NATIONS (small, hard to see) ───
+    'TON': { lon: -175.2, lat: -21.2 },   // Tonga
+    'WSM': { lon: -172.1, lat: -13.8 },   // Samoa
+    'FJI': { lon: 178.0,  lat: -17.7 },   // Fiji
+    'VUT': { lon: 168.1,  lat: -15.4 },   // Vanuatu
+    'SLB': { lon: 160.2,  lat: -9.6 },    // Solomon Islands
+    'TUV': { lon: 177.65, lat: -7.1 },    // Tuvalu
+    'NRU': { lon: 166.9,  lat: -0.52 },   // Nauru
+    'KIR': { lon: -168.7, lat: -3.4 },    // Kiribati
+    'MHL': { lon: 171.2,  lat: 7.1 },     // Marshall Islands
+    'FSM': { lon: 150.6,  lat: 7.4 },     // Micronesia
+    'PLW': { lon: 134.6,  lat: 7.5 },     // Palau
+    'ASM': { lon: -170.7, lat: -14.3 },   // American Samoa
+    'GUM': { lon: 144.8,  lat: 13.4 },    // Guam
+    'MNP': { lon: 145.7,  lat: 15.1 },    // N. Mariana Islands
+    'COK': { lon: -159.8, lat: -21.2 },   // Cook Islands
+    'NIU': { lon: -169.9, lat: -19.1 },   // Niue
+    'TKL': { lon: -172.5, lat: -9.2 },    // Tokelau
+    'WLF': { lon: -176.2, lat: -13.3 },   // Wallis & Futuna
+    'PYF': { lon: -149.4, lat: -17.7 },   // French Polynesia
+    'NCL': { lon: 165.6,  lat: -21.5 },   // New Caledonia
+    'NFK': { lon: 167.95, lat: -29.0 },   // Norfolk Island
+    'PCN': { lon: -130.1, lat: -25.07 },  // Pitcairn
+    'UMI': { lon: -167.0, lat: 18.0 },    // US Minor Outlying Islands
+
+    // ─── CARIBBEAN SMALL ISLANDS ───
+    'ATG': { lon: -61.8, lat: 17.06 },    // Antigua & Barbuda
+    'BRB': { lon: -59.54, lat: 13.19 },   // Barbados
+    'DMA': { lon: -61.37, lat: 15.42 },   // Dominica
+    'GRD': { lon: -61.68, lat: 12.12 },   // Grenada
+    'KNA': { lon: -62.78, lat: 17.36 },   // Saint Kitts & Nevis
+    'LCA': { lon: -60.98, lat: 13.91 },   // Saint Lucia
+    'VCT': { lon: -61.2,  lat: 13.25 },   // Saint Vincent
+    'TTO': { lon: -61.22, lat: 10.69 },   // Trinidad & Tobago
+    'BHS': { lon: -77.4,  lat: 25.03 },   // Bahamas (chain of small islands)
+    'BLM': { lon: -62.83, lat: 17.9 },    // Saint Barthélemy
+    'MAF': { lon: -63.05, lat: 18.08 },   // Saint Martin
+    'SXM': { lon: -63.06, lat: 18.04 },   // Sint Maarten
+    'ABW': { lon: -69.97, lat: 12.52 },   // Aruba
+    'CUW': { lon: -68.97, lat: 12.17 },   // Curaçao
+    'BES': { lon: -68.27, lat: 12.18 },   // Bonaire
+    'AIA': { lon: -63.05, lat: 18.22 },   // Anguilla
+    'MSR': { lon: -62.18, lat: 16.74 },   // Montserrat
+    'VGB': { lon: -64.6,  lat: 18.43 },   // British Virgin Islands
+    'VIR': { lon: -64.8,  lat: 18.34 },   // US Virgin Islands
+    'CYM': { lon: -81.25, lat: 19.31 },   // Cayman Islands
+    'TCA': { lon: -71.8,  lat: 21.7 },    // Turks & Caicos
+    'BMU': { lon: -64.78, lat: 32.32 },   // Bermuda
+
+    // ─── EUROPEAN MICROSTATES ───
+    'VAT': { lon: 12.45, lat: 41.9 },     // Vatican
+    'MCO': { lon: 7.42,  lat: 43.74 },    // Monaco
+    'SMR': { lon: 12.46, lat: 43.94 },    // San Marino
+    'LIE': { lon: 9.55,  lat: 47.17 },    // Liechtenstein
+    'AND': { lon: 1.52,  lat: 42.51 },    // Andorra
+    'MLT': { lon: 14.38, lat: 35.94 },    // Malta
+    'GIB': { lon: -5.35, lat: 36.14 },    // Gibraltar
+    'IMN': { lon: -4.55, lat: 54.24 },    // Isle of Man
+    'JEY': { lon: -2.13, lat: 49.21 },    // Jersey
+    'GGY': { lon: -2.59, lat: 49.46 },    // Guernsey
+    'FRO': { lon: -6.91, lat: 61.89 },    // Faroe Islands
+
+    // ─── INDIAN OCEAN ───
+    'MDV': { lon: 73.22, lat: 3.2 },      // Maldives
+    'SYC': { lon: 55.49, lat: -4.68 },    // Seychelles
+    'MUS': { lon: 57.55, lat: -20.35 },   // Mauritius
+    'COM': { lon: 43.33, lat: -11.65 },   // Comoros
+    'IOT': { lon: 71.5,  lat: -6.34 },    // BIOT (Chagos)
+    'REU': { lon: 55.54, lat: -21.12 },   // Réunion
+    'MYT': { lon: 45.17, lat: -12.83 },   // Mayotte
+
+    // ─── ATLANTIC ISLANDS ───
+    'CPV': { lon: -23.04, lat: 16.54 },   // Cape Verde
+    'STP': { lon: 6.61,   lat: 0.19 },    // São Tomé & Príncipe
+    'SHN': { lon: -5.72,  lat: -15.96 },  // Saint Helena
+    'FLK': { lon: -59.52, lat: -51.8 },   // Falkland Islands
+    'SPM': { lon: -56.33, lat: 46.94 },   // Saint Pierre & Miquelon
+
+    // ─── ASIA (small) ───
+    'SGP': { lon: 103.82, lat: 1.35 },    // Singapore
+    'BHR': { lon: 50.56,  lat: 26.07 },   // Bahrain
+    'BRN': { lon: 114.73, lat: 4.54 },    // Brunei
+    'HKG': { lon: 114.17, lat: 22.32 },   // Hong Kong
+    'MAC': { lon: 113.55, lat: 22.2 },    // Macau
+
+    // ─── INDIAN/AUS TERRITORIES ───
+    'CXR': { lon: 105.69, lat: -10.49 },  // Christmas Island
+    'CCK': { lon: 96.87,  lat: -12.18 },  // Cocos Islands
+    'GRL': { lon: -42.0,  lat: 71.7 },    // Greenland (huge but sparse, marker helps)
+    'SGS': { lon: -36.6,  lat: -54.4 }    // South Georgia
 };
 
 function renderMap() {
@@ -633,10 +727,10 @@ function renderMap() {
             if (c) openPanel(c.iso3);
         });
 
-    // ─── DRAW MARKERS for countries without ISO numeric IDs ───
+    // ─── DRAW MARKERS for small/missing countries ───
+    // Renders for: (1) countries without ISO numeric IDs, (2) small countries hard to see at world scale
     const markersGroup = g.append('g').attr('class', 'markers-layer');
     Object.values(data.countries).forEach(c => {
-        if (c.id !== null) return;  // Skip countries that have map shapes already
         const coords = customCoords[c.iso3];
         if (!coords) return;
 
