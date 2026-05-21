@@ -61,6 +61,14 @@
         .map-container { flex: 1; position: relative; overflow: hidden; background: var(--oc); }
         #world-map { width: 100%; height: 100%; display: block; }
         .country-path { fill: var(--lb); stroke: rgba(18,15,12,0.8); stroke-width: 0.4; cursor: pointer; transition: fill 0.2s; vector-effect: non-scaling-stroke; }
+
+        /* MARKERS for countries without map shapes */
+        .marker { cursor: pointer; transition: opacity 0.18s; }
+        .marker-circle { fill: var(--sg); stroke: #fff; stroke-width: 1.5; vector-effect: non-scaling-stroke; transition: fill 0.2s; }
+        .marker.visited .marker-circle { fill: var(--tc); stroke: var(--gd); }
+        .marker:hover .marker-circle { fill: var(--gdl); stroke: #fff; }
+        .marker-ring { fill: none; stroke: var(--gd); stroke-width: 1.2; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity 0.2s; }
+        .marker:hover .marker-ring { opacity: 0.8; }
         .country-path:hover { fill: var(--gdl) !important; }
         .country-path.visited { fill: var(--tc); }
         .country-path.visited:hover { fill: var(--tcl) !important; }
@@ -554,6 +562,28 @@ async function loadMap() {
 
 let mapZoom = null;  // D3 zoom behavior, kept for buttons
 
+// Coordinates for countries WITHOUT ISO numeric IDs (small territories, de facto states, subdivisions)
+// These get rendered as clickable circle markers since the world TopoJSON has no shapes for them
+const customCoords = {
+    'XKX': { lon: 20.9, lat: 42.6 },     // Kosovo
+    'ABK': { lon: 41.0, lat: 43.0 },     // Abkhazia
+    'OSE': { lon: 44.0, lat: 42.3 },     // South Ossetia
+    'TRS': { lon: 29.5, lat: 47.2 },     // Transnistria
+    'SOM': { lon: 45.5, lat: 9.5 },      // Somaliland
+    'NCY': { lon: 33.4, lat: 35.3 },     // Northern Cyprus
+    'NKO': { lon: 46.7, lat: 39.8 },     // Nagorno-Karabakh
+    'ASC': { lon: -14.36, lat: -7.95 },  // Ascension Island
+    'TAA': { lon: -12.3, lat: -37.1 },   // Tristan da Cunha
+    'EAS': { lon: -109.4, lat: -27.1 },  // Easter Island
+    'GAL': { lon: -90.97, lat: -0.95 },  // Galápagos
+    'HAW': { lon: -156.7, lat: 20.7 },   // Hawaii
+    'CNR': { lon: -15.5, lat: 28.3 },    // Canary Islands
+    'MAD': { lon: -17.0, lat: 32.75 },   // Madeira
+    'AZO': { lon: -28.0, lat: 38.0 },    // Azores
+    'SIC': { lon: 14.0, lat: 37.6 },     // Sicily
+    'SRD': { lon: 9.1, lat: 40.1 }       // Sardinia
+};
+
 function renderMap() {
     if (!worldData) return;
     const container = document.getElementById('mapContainer');
@@ -603,6 +633,48 @@ function renderMap() {
             if (c) openPanel(c.iso3);
         });
 
+    // ─── DRAW MARKERS for countries without ISO numeric IDs ───
+    const markersGroup = g.append('g').attr('class', 'markers-layer');
+    Object.values(data.countries).forEach(c => {
+        if (c.id !== null) return;  // Skip countries that have map shapes already
+        const coords = customCoords[c.iso3];
+        if (!coords) return;
+
+        const point = proj([coords.lon, coords.lat]);
+        if (!point || isNaN(point[0]) || isNaN(point[1])) return;
+
+        // For globe projection, only show markers on visible hemisphere
+        if (projection === 'ortho') {
+            const rotate = proj.rotate();
+            const angle = d3.geoDistance([coords.lon, coords.lat], [-rotate[0], -rotate[1]]);
+            if (angle > Math.PI / 2) return;
+        }
+
+        const visited = c.visited;
+        const marker = markersGroup.append('g')
+            .attr('class', 'marker' + (visited ? ' visited' : ''))
+            .attr('data-iso3', c.iso3)
+            .attr('transform', `translate(${point[0]}, ${point[1]})`);
+
+        marker.append('circle').attr('class', 'marker-ring').attr('r', 9);
+        marker.append('circle').attr('class', 'marker-circle').attr('r', 5);
+
+        marker
+            .on('mousemove', (event) => {
+                tooltip.innerHTML = '<div class="tt-name">' + c.name + '</div>' +
+                    (c.visited ? '<div class="tt-status">✓ Visited</div>' : '<div class="tt-status" style="color:rgba(255,255,255,0.5)">Click to mark</div>');
+                const rect = container.getBoundingClientRect();
+                tooltip.style.left = (event.clientX - rect.left + 14) + 'px';
+                tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
+                tooltip.classList.add('show');
+            })
+            .on('mouseleave', () => tooltip.classList.remove('show'))
+            .on('click', (event) => {
+                event.stopPropagation();
+                openPanel(c.iso3);
+            });
+    });
+
     if (projection === 'natural') {
         // Flat map: zoom + pan with mouse wheel and drag
         mapZoom = d3.zoom()
@@ -610,6 +682,10 @@ function renderMap() {
             .translateExtent([[-W * 0.5, -H * 0.5], [W * 1.5, H * 1.5]])
             .on('zoom', (event) => {
                 g.attr('transform', event.transform);
+                // Counter-scale markers so they stay constant size
+                const k = event.transform.k;
+                g.selectAll('.marker-circle').attr('r', 5 / k);
+                g.selectAll('.marker-ring').attr('r', 9 / k);
             });
         svg.call(mapZoom);
     } else {
@@ -620,9 +696,10 @@ function renderMap() {
             .on('drag', e => {
                 proj.rotate([r0[0] + (e.x - pos0[0]) * 0.4, r0[1] - (e.y - pos0[1]) * 0.4]);
                 g.selectAll('path').attr('d', path);
+                // Reposition / hide markers based on visible hemisphere
+                updateMarkersForGlobe(proj);
             })
         );
-        // Globe also responds to wheel zoom (changes scale)
         let globeScale = Math.min(W, H) / 2.2;
         svg.on('wheel', (event) => {
             event.preventDefault();
@@ -630,9 +707,25 @@ function renderMap() {
             globeScale = Math.max(Math.min(W, H) / 2.2 * 0.7, Math.min(globeScale * factor, Math.min(W, H) * 3));
             proj.scale(globeScale);
             g.selectAll('path').attr('d', path);
+            updateMarkersForGlobe(proj);
         });
         mapZoom = null;
     }
+}
+
+function updateMarkersForGlobe(proj) {
+    const rotate = proj.rotate();
+    d3.select('#world-map').selectAll('.marker').each(function() {
+        const iso3 = this.getAttribute('data-iso3');
+        const coords = customCoords[iso3];
+        if (!coords) return;
+        const angle = d3.geoDistance([coords.lon, coords.lat], [-rotate[0], -rotate[1]]);
+        const visible = angle <= Math.PI / 2;
+        const point = proj([coords.lon, coords.lat]);
+        d3.select(this)
+            .style('display', visible ? null : 'none')
+            .attr('transform', `translate(${point[0]}, ${point[1]})`);
+    });
 }
 
 // Update colors only, without full re-render (preserves zoom/drag state)
@@ -642,6 +735,13 @@ function redrawMapColors() {
             const c = findCountryByNumericId(d.id);
             return 'country-path' + (c && c.visited ? ' visited' : '');
         });
+    // Also update markers
+    d3.select('#world-map').selectAll('.marker').each(function() {
+        const iso3 = this.getAttribute('data-iso3');
+        const c = data.countries[iso3];
+        if (!c) return;
+        this.classList.toggle('visited', c.visited);
+    });
 }
 
 // ─── ZOOM CONTROLS ─────────────────────────────────────
