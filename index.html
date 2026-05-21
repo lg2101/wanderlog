@@ -60,7 +60,7 @@
 
         .map-container { flex: 1; position: relative; overflow: hidden; background: var(--oc); }
         #world-map { width: 100%; height: 100%; display: block; }
-        .country-path { fill: var(--lb); stroke: rgba(18,15,12,0.8); stroke-width: 0.4; cursor: pointer; transition: fill 0.2s; }
+        .country-path { fill: var(--lb); stroke: rgba(18,15,12,0.8); stroke-width: 0.4; cursor: pointer; transition: fill 0.2s; vector-effect: non-scaling-stroke; }
         .country-path:hover { fill: var(--gdl) !important; }
         .country-path.visited { fill: var(--tc); }
         .country-path.visited:hover { fill: var(--tcl) !important; }
@@ -71,10 +71,18 @@
         .tt-name { font-family: 'Fraunces', serif; font-size: 0.92rem; font-weight: 500; }
         .tt-status { font-size: 0.7rem; margin-top: 2px; color: var(--tcl); }
 
-        .map-controls { position: absolute; top: 18px; right: 18px; display: flex; background: rgba(16,14,12,0.92); border: 1px solid rgba(212,168,75,0.2); border-radius: 8px; overflow: hidden; backdrop-filter: blur(8px); z-index: 100; }
-        .control-btn { padding: 8px 14px; font-size: 0.76rem; cursor: pointer; color: rgba(245,240,232,0.45); border: none; background: none; transition: all 0.18s; font-family: 'Manrope', sans-serif; font-weight: 500; }
-        .control-btn:hover { color: var(--cr); }
+        .map-controls { position: absolute; top: 18px; right: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
+        .control-group { display: flex; background: rgba(16,14,12,0.92); border: 1px solid rgba(212,168,75,0.2); border-radius: 8px; overflow: hidden; backdrop-filter: blur(8px); }
+        .control-btn { padding: 8px 14px; font-size: 0.76rem; cursor: pointer; color: rgba(245,240,232,0.45); border: none; background: none; transition: all 0.18s; font-family: 'Manrope', sans-serif; font-weight: 500; min-width: 40px; }
+        .control-btn:hover { color: var(--cr); background: rgba(255,255,255,0.05); }
         .control-btn.active { background: var(--tc); color: var(--cr); }
+        .control-btn.icon-btn { font-size: 1rem; font-weight: 700; padding: 6px 12px; }
+        .control-divider { width: 1px; background: rgba(212,168,75,0.15); }
+
+        /* REGION SHORTCUTS */
+        .region-shortcuts { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; background: rgba(16,14,12,0.92); border: 1px solid rgba(212,168,75,0.2); border-radius: 22px; padding: 5px; backdrop-filter: blur(8px); z-index: 100; }
+        .region-btn { padding: 5px 14px; font-size: 0.72rem; cursor: pointer; color: rgba(245,240,232,0.55); border: none; background: none; transition: all 0.18s; font-family: 'Manrope', sans-serif; font-weight: 500; border-radius: 16px; }
+        .region-btn:hover { background: rgba(255,255,255,0.06); color: var(--cr); }
 
         .map-legend { position: absolute; bottom: 22px; left: 22px; background: rgba(16,14,12,0.9); border: 1px solid rgba(212,168,75,0.12); padding: 13px 16px; border-radius: 10px; backdrop-filter: blur(8px); z-index: 100; }
         .legend-title { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.16em; color: rgba(245,240,232,0.3); margin-bottom: 9px; font-weight: 600; }
@@ -187,9 +195,25 @@
     <div class="map-container" id="mapContainer">
         <svg id="world-map"></svg>
 
+        <div class="region-shortcuts">
+            <button class="region-btn" onclick="zoomToRegion('world')">🌍 World</button>
+            <button class="region-btn" onclick="zoomToRegion('europe')">Europe</button>
+            <button class="region-btn" onclick="zoomToRegion('caribbean')">Caribbean</button>
+            <button class="region-btn" onclick="zoomToRegion('pacific')">Pacific</button>
+            <button class="region-btn" onclick="zoomToRegion('indian')">Indian Ocean</button>
+            <button class="region-btn" onclick="zoomToRegion('mediterranean')">Mediterranean</button>
+        </div>
+
         <div class="map-controls">
-            <button class="control-btn active" onclick="setProjection('natural', event)">Flat</button>
-            <button class="control-btn" onclick="setProjection('ortho', event)">Globe</button>
+            <div class="control-group">
+                <button class="control-btn active" onclick="setProjection('natural', event)">Flat</button>
+                <button class="control-btn" onclick="setProjection('ortho', event)">Globe</button>
+            </div>
+            <div class="control-group">
+                <button class="control-btn icon-btn" onclick="zoomIn()" title="Zoom in">+</button>
+                <button class="control-btn icon-btn" onclick="zoomOut()" title="Zoom out">−</button>
+                <button class="control-btn icon-btn" onclick="zoomReset()" title="Reset zoom">⌂</button>
+            </div>
         </div>
 
         <div class="map-legend">
@@ -528,6 +552,8 @@ async function loadMap() {
     }
 }
 
+let mapZoom = null;  // D3 zoom behavior, kept for buttons
+
 function renderMap() {
     if (!worldData) return;
     const container = document.getElementById('mapContainer');
@@ -547,10 +573,13 @@ function renderMap() {
     const path = d3.geoPath().projection(proj);
     const tooltip = document.getElementById('tooltip');
 
-    svg.append('path').datum({ type: 'Sphere' }).attr('class', 'sphere').attr('d', path);
+    // Wrap everything in a <g> so zoom transform applies to all paths
+    const g = svg.append('g').attr('class', 'map-g');
+
+    g.append('path').datum({ type: 'Sphere' }).attr('class', 'sphere').attr('d', path);
 
     const countries = topojson.feature(worldData, worldData.objects.countries);
-    svg.selectAll('.country-path')
+    g.selectAll('.country-path')
         .data(countries.features)
         .enter()
         .append('path')
@@ -563,36 +592,110 @@ function renderMap() {
             const c = findCountryByNumericId(d.id);
             if (!c) return;
             tooltip.innerHTML = '<div class="tt-name">' + c.name + '</div>' + (c.visited ? '<div class="tt-status">✓ Visited</div>' : '<div class="tt-status" style="color:rgba(255,255,255,0.5)">Click to mark</div>');
-            tooltip.style.left = (event.offsetX + 14) + 'px';
-            tooltip.style.top = (event.offsetY - 10) + 'px';
+            const rect = container.getBoundingClientRect();
+            tooltip.style.left = (event.clientX - rect.left + 14) + 'px';
+            tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
             tooltip.classList.add('show');
         })
         .on('mouseleave', () => tooltip.classList.remove('show'))
         .on('click', (event, d) => {
             const c = findCountryByNumericId(d.id);
             if (c) openPanel(c.iso3);
-            else console.log('No country found for ID:', d.id);
         });
 
-    if (projection === 'ortho') {
+    if (projection === 'natural') {
+        // Flat map: zoom + pan with mouse wheel and drag
+        mapZoom = d3.zoom()
+            .scaleExtent([1, 25])
+            .translateExtent([[-W * 0.5, -H * 0.5], [W * 1.5, H * 1.5]])
+            .on('zoom', (event) => {
+                g.attr('transform', event.transform);
+            });
+        svg.call(mapZoom);
+    } else {
+        // Globe mode: drag to rotate
         let r0, pos0;
         svg.call(d3.drag()
             .on('start', e => { r0 = proj.rotate(); pos0 = [e.x, e.y]; })
             .on('drag', e => {
                 proj.rotate([r0[0] + (e.x - pos0[0]) * 0.4, r0[1] - (e.y - pos0[1]) * 0.4]);
-                svg.selectAll('path').attr('d', path);
+                g.selectAll('path').attr('d', path);
             })
         );
+        // Globe also responds to wheel zoom (changes scale)
+        let globeScale = Math.min(W, H) / 2.2;
+        svg.on('wheel', (event) => {
+            event.preventDefault();
+            const factor = event.deltaY < 0 ? 1.15 : 0.87;
+            globeScale = Math.max(Math.min(W, H) / 2.2 * 0.7, Math.min(globeScale * factor, Math.min(W, H) * 3));
+            proj.scale(globeScale);
+            g.selectAll('path').attr('d', path);
+        });
+        mapZoom = null;
     }
 }
 
-// Only update colors without full re-render (preserves drag state, click handlers)
+// Update colors only, without full re-render (preserves zoom/drag state)
 function redrawMapColors() {
     d3.select('#world-map').selectAll('.country-path')
         .attr('class', d => {
             const c = findCountryByNumericId(d.id);
             return 'country-path' + (c && c.visited ? ' visited' : '');
         });
+}
+
+// ─── ZOOM CONTROLS ─────────────────────────────────────
+function zoomIn() {
+    if (projection !== 'natural' || !mapZoom) return;
+    d3.select('#world-map').transition().duration(280).call(mapZoom.scaleBy, 1.5);
+}
+function zoomOut() {
+    if (projection !== 'natural' || !mapZoom) return;
+    d3.select('#world-map').transition().duration(280).call(mapZoom.scaleBy, 0.67);
+}
+function zoomReset() {
+    if (projection !== 'natural' || !mapZoom) return;
+    d3.select('#world-map').transition().duration(400).call(mapZoom.transform, d3.zoomIdentity);
+}
+
+// ─── REGION SHORTCUTS ──────────────────────────────────
+const regions = {
+    world:         { k: 1,   x: 0,   y: 0 },
+    europe:        { k: 5,   lon:  15,  lat: 50 },
+    caribbean:     { k: 8,   lon: -73,  lat: 18 },
+    pacific:       { k: 4,   lon: 175,  lat: -10 },
+    indian:        { k: 5,   lon:  75,  lat: -10 },
+    mediterranean: { k: 6,   lon:  15,  lat: 38 }
+};
+
+function zoomToRegion(name) {
+    if (projection !== 'natural') {
+        // Switch to flat first
+        setProjection('natural');
+        document.querySelectorAll('.control-btn').forEach(b => {
+            if (b.textContent === 'Flat') b.classList.add('active');
+            else if (b.textContent === 'Globe') b.classList.remove('active');
+        });
+    }
+    const r = regions[name];
+    if (!r || !mapZoom) return;
+
+    const container = document.getElementById('mapContainer');
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+
+    if (name === 'world') {
+        d3.select('#world-map').transition().duration(550).call(mapZoom.transform, d3.zoomIdentity);
+        return;
+    }
+
+    // Compute screen position of the lat/lon center, then build a transform that puts it at center and scales by k
+    const proj = d3.geoNaturalEarth1().scale(W / 6.3).translate([W / 2, H / 2]);
+    const [cx, cy] = proj([r.lon, r.lat]);
+    const tx = W / 2 - cx * r.k;
+    const ty = H / 2 - cy * r.k;
+    const transform = d3.zoomIdentity.translate(tx, ty).scale(r.k);
+    d3.select('#world-map').transition().duration(700).call(mapZoom.transform, transform);
 }
 
 // CRITICAL FIX: D3 topojson IDs are STRINGS, our data has NUMBERS — coerce both to Number
