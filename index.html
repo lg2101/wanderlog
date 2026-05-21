@@ -62,13 +62,13 @@
         #world-map { width: 100%; height: 100%; display: block; }
         .country-path { fill: var(--lb); stroke: rgba(18,15,12,0.8); stroke-width: 0.4; cursor: pointer; transition: fill 0.2s; vector-effect: non-scaling-stroke; }
 
-        /* MARKERS for countries without map shapes */
+        /* MARKERS for small countries / countries without map shapes */
         .marker { cursor: pointer; transition: opacity 0.18s; }
-        .marker-circle { fill: var(--sg); stroke: #fff; stroke-width: 1.5; vector-effect: non-scaling-stroke; transition: fill 0.2s; }
+        .marker-circle { fill: #E8C870; stroke: #211F1C; stroke-width: 2; vector-effect: non-scaling-stroke; transition: fill 0.2s; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7)); }
         .marker.visited .marker-circle { fill: var(--tc); stroke: var(--gd); }
-        .marker:hover .marker-circle { fill: var(--gdl); stroke: #fff; }
-        .marker-ring { fill: none; stroke: var(--gd); stroke-width: 1.2; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity 0.2s; }
-        .marker:hover .marker-ring { opacity: 0.8; }
+        .marker:hover .marker-circle { fill: var(--gdl); stroke: var(--cr); }
+        .marker-ring { fill: none; stroke: var(--gd); stroke-width: 1.8; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity 0.2s; }
+        .marker:hover .marker-ring { opacity: 1; }
         .country-path:hover { fill: var(--gdl) !important; }
         .country-path.visited { fill: var(--tc); }
         .country-path.visited:hover { fill: var(--tcl) !important; }
@@ -206,10 +206,11 @@
         <div class="region-shortcuts">
             <button class="region-btn" onclick="zoomToRegion('world')">🌍 World</button>
             <button class="region-btn" onclick="zoomToRegion('europe')">Europe</button>
-            <button class="region-btn" onclick="zoomToRegion('caribbean')">Caribbean</button>
-            <button class="region-btn" onclick="zoomToRegion('pacific')">Pacific</button>
-            <button class="region-btn" onclick="zoomToRegion('indian')">Indian Ocean</button>
             <button class="region-btn" onclick="zoomToRegion('mediterranean')">Mediterranean</button>
+            <button class="region-btn" onclick="zoomToRegion('caribbean')">Caribbean</button>
+            <button class="region-btn" onclick="zoomToRegion('pacific')">W Pacific</button>
+            <button class="region-btn" onclick="zoomToRegion('polynesia')">Polynesia</button>
+            <button class="region-btn" onclick="zoomToRegion('indian')">Indian Ocean</button>
         </div>
 
         <div class="map-controls">
@@ -225,9 +226,10 @@
         </div>
 
         <div class="map-legend">
-            <div class="legend-title">Visit status</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: var(--tc)"></div> Visited</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: var(--lb)"></div> Not yet</div>
+            <div class="legend-title">Map</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: var(--tc)"></div> Country visited</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: var(--lb)"></div> Country not yet</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: #E8C870; border-radius:50%; border:2px solid #211F1C; box-sizing:border-box;"></div> Small country marker</div>
         </div>
 
         <div id="tooltip"></div>
@@ -730,17 +732,16 @@ function renderMap() {
     // ─── DRAW MARKERS for small/missing countries ───
     // Renders for: (1) countries without ISO numeric IDs, (2) small countries hard to see at world scale
     const markersGroup = g.append('g').attr('class', 'markers-layer');
-    Object.values(data.countries).forEach(c => {
-        const coords = customCoords[c.iso3];
-        if (!coords) return;
 
-        const point = proj([coords.lon, coords.lat]);
+    // Helper that creates a marker for country c at a specific projected position
+    function makeMarker(c, lon, lat) {
+        const point = proj([lon, lat]);
         if (!point || isNaN(point[0]) || isNaN(point[1])) return;
 
         // For globe projection, only show markers on visible hemisphere
         if (projection === 'ortho') {
             const rotate = proj.rotate();
-            const angle = d3.geoDistance([coords.lon, coords.lat], [-rotate[0], -rotate[1]]);
+            const angle = d3.geoDistance([lon, lat], [-rotate[0], -rotate[1]]);
             if (angle > Math.PI / 2) return;
         }
 
@@ -748,10 +749,12 @@ function renderMap() {
         const marker = markersGroup.append('g')
             .attr('class', 'marker' + (visited ? ' visited' : ''))
             .attr('data-iso3', c.iso3)
+            .attr('data-lon', lon)
+            .attr('data-lat', lat)
             .attr('transform', `translate(${point[0]}, ${point[1]})`);
 
-        marker.append('circle').attr('class', 'marker-ring').attr('r', 9);
-        marker.append('circle').attr('class', 'marker-circle').attr('r', 5);
+        marker.append('circle').attr('class', 'marker-ring').attr('r', 14);
+        marker.append('circle').attr('class', 'marker-circle').attr('r', 6);
 
         marker
             .on('mousemove', (event) => {
@@ -767,6 +770,24 @@ function renderMap() {
                 event.stopPropagation();
                 openPanel(c.iso3);
             });
+    }
+
+    Object.values(data.countries).forEach(c => {
+        const coords = customCoords[c.iso3];
+        if (!coords) return;
+
+        // Always render at original position
+        makeMarker(c, coords.lon, coords.lat);
+
+        // For islands near the antimeridian (date line), render a 2nd marker
+        // at lon ± 360° so they appear on BOTH sides of the world map.
+        // Tonga (-175) is just east of NZ in reality, but on a 0°-centered map
+        // it appears far-left while NZ is far-right. Adding +185 copy makes it
+        // also appear next to NZ on the right.
+        if (projection === 'natural') {
+            if (coords.lon < -100) makeMarker(c, coords.lon + 360, coords.lat);
+            else if (coords.lon > 100) makeMarker(c, coords.lon - 360, coords.lat);
+        }
     });
 
     if (projection === 'natural') {
@@ -778,8 +799,8 @@ function renderMap() {
                 g.attr('transform', event.transform);
                 // Counter-scale markers so they stay constant size
                 const k = event.transform.k;
-                g.selectAll('.marker-circle').attr('r', 5 / k);
-                g.selectAll('.marker-ring').attr('r', 9 / k);
+                g.selectAll('.marker-circle').attr('r', 6 / k);
+                g.selectAll('.marker-ring').attr('r', 14 / k);
             });
         svg.call(mapZoom);
     } else {
@@ -810,12 +831,12 @@ function renderMap() {
 function updateMarkersForGlobe(proj) {
     const rotate = proj.rotate();
     d3.select('#world-map').selectAll('.marker').each(function() {
-        const iso3 = this.getAttribute('data-iso3');
-        const coords = customCoords[iso3];
-        if (!coords) return;
-        const angle = d3.geoDistance([coords.lon, coords.lat], [-rotate[0], -rotate[1]]);
+        const lon = parseFloat(this.getAttribute('data-lon'));
+        const lat = parseFloat(this.getAttribute('data-lat'));
+        if (isNaN(lon) || isNaN(lat)) return;
+        const angle = d3.geoDistance([lon, lat], [-rotate[0], -rotate[1]]);
         const visible = angle <= Math.PI / 2;
-        const point = proj([coords.lon, coords.lat]);
+        const point = proj([lon, lat]);
         d3.select(this)
             .style('display', visible ? null : 'none')
             .attr('transform', `translate(${point[0]}, ${point[1]})`);
@@ -857,7 +878,8 @@ const regions = {
     world:         { k: 1,   x: 0,   y: 0 },
     europe:        { k: 5,   lon:  15,  lat: 50 },
     caribbean:     { k: 8,   lon: -73,  lat: 18 },
-    pacific:       { k: 4,   lon: 175,  lat: -10 },
+    pacific:       { k: 3.5, lon: 178,  lat: -10 },   // W Pacific - NZ, Fiji, Tonga wrap
+    polynesia:     { k: 4,   lon: -150, lat: -10 },   // E Pacific - Hawaii, Cook Is, French Polynesia
     indian:        { k: 5,   lon:  75,  lat: -10 },
     mediterranean: { k: 6,   lon:  15,  lat: 38 }
 };
