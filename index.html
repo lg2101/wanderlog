@@ -6,88 +6,562 @@
     <title>wanderlog — World Travel Map</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --tc:       #C4622D;
+            --tcl:      #D4845A;
+            --tcd:      #9E4E24;
+            --tcdeep:   #6B2510;
+            --tl:       #2D6B7F;
+            --cr:       #F5F0E8;
+            --crd:      #EDE5D8;
+            --ch:       #211F1C;
+            --chl:      #2C2A27;
+            --gd:       #D4A84B;
+            --gdl:      #E8C870;
+            --sg:       #7A9E7E;
+            --oc:       #172B38;
+            --lb:       #3A3530;
+            --panel:    rgba(20, 18, 16, 0.97);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; }
-        body { font-family: 'Outfit', sans-serif; background: #111827; color: #374151; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        header { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; background: white; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; z-index: 200; }
-        .logo { font-size: 1.4rem; font-weight: 700; color: #2563eb; letter-spacing: -0.02em; }
-        .header-stats { display: flex; gap: 24px; align-items: center; }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background: var(--ch);
+            color: var(--cr);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            height: 58px;
+            background: rgba(18, 16, 14, 0.97);
+            border-bottom: 1px solid rgba(212, 168, 75, 0.18);
+            flex-shrink: 0;
+            z-index: 200;
+            backdrop-filter: blur(8px);
+        }
+
+        .logo {
+            font-family: 'Fraunces', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            font-style: italic;
+            color: var(--cr);
+            letter-spacing: 0.02em;
+            cursor: pointer;
+        }
+        .logo em { color: var(--gd); font-style: normal; font-weight: 700; }
+
+        .header-stats {
+            display: flex;
+            gap: 28px;
+            align-items: center;
+        }
         .stat-item { text-align: center; }
-        .stat-number { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; color: #2563eb; }
-        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-top: 2px; }
-        .nav-tabs { display: flex; gap: 4px; background: #f3f4f6; padding: 4px; border-radius: 8px; }
-        .nav-tab { padding: 6px 16px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; cursor: pointer; color: #9ca3af; transition: all 0.2s; border: none; background: none; }
-        .nav-tab:hover { color: #374151; }
-        .nav-tab.active { background: white; color: #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .main-layout { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 280px; background: white; border-right: 1px solid #e5e7eb; overflow-y: auto; flex-shrink: 0; }
-        .sidebar-header { padding: 14px 18px 10px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; font-weight: 600; }
-        .continent-group { border-bottom: 1px solid #f3f4f6; }
-        .continent-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; cursor: pointer; transition: background 0.15s; }
-        .continent-header:hover { background: #f9fafb; }
-        .continent-left { display: flex; align-items: center; gap: 8px; }
+        .stat-number {
+            font-family: 'Fraunces', serif;
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--tcl);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(245, 240, 232, 0.4);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        .stat-divider {
+            width: 1px;
+            height: 28px;
+            background: rgba(212, 168, 75, 0.12);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 2px;
+            background: rgba(255,255,255,0.04);
+            padding: 3px;
+            border-radius: 9px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .nav-tab {
+            padding: 5px 16px;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: rgba(245, 240, 232, 0.45);
+            transition: all 0.18s;
+            letter-spacing: 0.02em;
+            background: none;
+            border: none;
+            font-family: inherit;
+        }
+        .nav-tab:hover { color: rgba(245, 240, 232, 0.75); }
+        .nav-tab.active {
+            background: var(--tc);
+            color: var(--cr);
+            box-shadow: 0 2px 8px rgba(196, 98, 45, 0.35);
+        }
+
+        /* LAYOUT */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 270px;
+            background: rgba(16, 14, 12, 0.96);
+            border-right: 1px solid rgba(212, 168, 75, 0.08);
+            overflow-y: auto;
+            flex-shrink: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(212,168,75,0.2) transparent;
+        }
+        .sidebar::-webkit-scrollbar { width: 3px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(212,168,75,0.2); border-radius: 2px; }
+
+        .sidebar-header {
+            padding: 14px 18px 10px;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: rgba(245,240,232,0.25);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-weight: 600;
+        }
+
+        .continent-group { border-bottom: 1px solid rgba(255,255,255,0.04); }
+
+        .continent-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 18px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .continent-header:hover { background: rgba(255,255,255,0.025); }
+
+        .continent-left { display: flex; align-items: center; gap: 10px; }
         .continent-icon { font-size: 1rem; }
-        .continent-name { font-size: 0.9rem; font-weight: 600; color: #111827; }
-        .continent-count { font-size: 0.75rem; color: #9ca3af; margin-left: auto; }
-        .country-list { max-height: 0; overflow: hidden; transition: max-height 0.28s ease; }
-        .country-list.open { max-height: 500px; }
+        .continent-name {
+            font-family: 'Fraunces', serif;
+            font-size: 0.92rem;
+            font-style: italic;
+            font-weight: 500;
+            color: var(--cr);
+            letter-spacing: 0.02em;
+        }
+
+        .progress-ring-wrap {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+        }
+        .progress-ring-wrap svg { transform: rotate(-90deg); position: absolute; inset: 0; }
+        .progress-ring-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.55rem;
+            font-weight: 600;
+            color: var(--tcl);
+            line-height: 1.1;
+            text-align: center;
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .country-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.28s ease;
+        }
+        .country-list.open { max-height: 800px; overflow-y: auto; }
+
         .country-list-inner { padding: 4px 10px 10px; }
-        .country-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #9ca3af; transition: all 0.12s; }
-        .country-item:hover { background: #f9fafb; color: #374151; }
-        .country-item.visited { color: #10b981; font-weight: 500; }
-        .visit-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: #e5e7eb; }
-        .visit-dot.visited { background: #10b981; }
-        .map-container { flex: 1; position: relative; overflow: hidden; background: #0f172a; }
+
+        .country-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            color: rgba(245, 240, 232, 0.5);
+            transition: all 0.12s;
+            font-weight: 400;
+        }
+        .country-item:hover { background: rgba(255,255,255,0.05); color: var(--cr); }
+        .country-item.visited { color: rgba(245, 240, 232, 0.9); font-weight: 500; }
+        .country-item.visited:hover { background: rgba(196, 98, 45, 0.1); }
+
+        .visit-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .visit-dot.visited {
+            background: var(--tc);
+            border-color: var(--tcd);
+            box-shadow: 0 0 6px rgba(196,98,45,0.4);
+        }
+
+        /* MAP */
+        .map-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--oc);
+        }
+
         #world-map { width: 100%; height: 100%; display: block; }
-        .country-path { fill: #1e293b; stroke: rgba(0,0,0,0.3); stroke-width: 0.4; cursor: pointer; transition: fill 0.18s; }
-        .country-path:hover { fill: #334155 !important; }
-        .country-path.visited { fill: #10b981; }
-        #tooltip { position: absolute; background: white; border: 1px solid #e5e7eb; color: #111827; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; pointer-events: none; opacity: 0; transition: opacity 0.12s; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 300; }
+
+        .country-path {
+            fill: var(--lb);
+            stroke: rgba(18, 15, 12, 0.8);
+            stroke-width: 0.4;
+            cursor: pointer;
+            transition: fill 0.18s;
+        }
+        .country-path:hover { fill: var(--gdl) !important; }
+        .country-path.visited { fill: var(--tc); }
+
+        .sphere { fill: var(--oc); }
+
+        /* TOOLTIP */
+        #tooltip {
+            position: absolute;
+            background: rgba(18, 16, 14, 0.95);
+            border: 1px solid rgba(212, 168, 75, 0.25);
+            color: var(--cr);
+            padding: 8px 14px;
+            border-radius: 7px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.12s;
+            white-space: nowrap;
+            backdrop-filter: blur(6px);
+            z-index: 300;
+        }
         #tooltip.show { opacity: 1; }
-        .tt-name { font-weight: 600; }
-        .tt-status { font-size: 0.7rem; margin-top: 2px; color: #10b981; }
-        .map-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
-        .control-btn { background: white; border: 1px solid #e5e7eb; color: #374151; padding: 8px 14px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-        .control-btn:hover { background: #f9fafb; border-color: #2563eb; color: #2563eb; }
-        .control-btn.active { background: #2563eb; border-color: #2563eb; color: white; }
-        .detail-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 360px; background: white; border-left: 1px solid #e5e7eb; transform: translateX(100%); transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto; z-index: 150; }
+        .tt-name { font-family: 'Fraunces', serif; font-size: 0.92rem; font-weight: 500; }
+        .tt-status { font-size: 0.7rem; margin-top: 2px; color: var(--tcl); }
+
+        /* MAP CONTROLS */
+        .map-controls {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            display: flex;
+            gap: 0;
+            background: rgba(16, 14, 12, 0.92);
+            border: 1px solid rgba(212, 168, 75, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+        .control-btn {
+            padding: 8px 14px;
+            font-size: 0.76rem;
+            cursor: pointer;
+            color: rgba(245,240,232,0.45);
+            border: none;
+            background: none;
+            transition: all 0.18s;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 500;
+        }
+        .control-btn:hover { color: var(--cr); }
+        .control-btn.active { background: var(--tc); color: var(--cr); }
+
+        /* LEGEND */
+        .map-legend {
+            position: absolute;
+            bottom: 22px;
+            left: 22px;
+            background: rgba(16, 14, 12, 0.9);
+            border: 1px solid rgba(212, 168, 75, 0.12);
+            padding: 13px 16px;
+            border-radius: 10px;
+            backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+        .legend-title {
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: rgba(245,240,232,0.3);
+            margin-bottom: 9px;
+            font-weight: 600;
+        }
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 0.73rem;
+            color: rgba(245,240,232,0.6);
+            margin-bottom: 5px;
+        }
+        .legend-row:last-child { margin-bottom: 0; }
+        .legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+        /* DETAIL PANEL */
+        .detail-panel {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 380px;
+            background: var(--panel);
+            border-left: 1px solid rgba(212, 168, 75, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            z-index: 250;
+            backdrop-filter: blur(10px);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(212,168,75,0.2) transparent;
+        }
         .detail-panel.open { transform: translateX(0); }
-        .detail-hero { position: relative; height: 160px; background: linear-gradient(135deg, #2563eb, #1e40af); overflow: hidden; }
-        .hero-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 20px; background: linear-gradient(to top, rgba(0,0,0,0.3), transparent); color: white; }
-        .hero-flag { font-size: 2rem; margin-bottom: 4px; }
-        .hero-name { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
-        .hero-continent { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; opacity: 0.9; }
-        .detail-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.5); color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-        .detail-close:hover { background: rgba(255,255,255,0.5); }
-        .detail-body { padding: 20px; }
-        .detail-actions { display: flex; gap: 10px; margin-bottom: 20px; }
-        .action-btn { flex: 1; padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
-        .btn-visited { background: #10b981; color: white; }
-        .btn-visited:hover { background: #059669; transform: translateY(-1px); }
-        .btn-visited.active { box-shadow: 0 0 0 3px rgba(16,185,129,0.3); }
-        .btn-not-visited { background: #e5e7eb; color: #374151; }
-        .btn-not-visited:hover { background: #d1d5db; }
-        .btn-not-visited.active { background: #9ca3af; color: white; }
-        .detail-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .meta-item { background: #f9fafb; padding: 12px; border-radius: 6px; }
-        .meta-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 4px; }
-        .meta-value { font-size: 0.9rem; font-weight: 600; color: #111827; }
-        .section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; font-weight: 600; margin-bottom: 8px; }
-        .map-legend { position: absolute; bottom: 22px; left: 22px; background: white; border: 1px solid #e5e7eb; padding: 12px 16px; border-radius: 8px; font-size: 0.75rem; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .legend-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; font-weight: 600; margin-bottom: 8px; }
-        .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; color: #4b5563; }
-        .legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+        .detail-hero {
+            position: relative;
+            height: 180px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--tcdeep) 0%, var(--tl) 100%);
+        }
+        .hero-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(18,16,14,0.92) 0%, rgba(18,16,14,0.3) 60%, transparent 100%);
+        }
+        .hero-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 22px;
+            z-index: 2;
+        }
+        .hero-flag {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        .hero-name {
+            font-family: 'Fraunces', serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--cr);
+            line-height: 1.1;
+            letter-spacing: -0.01em;
+        }
+        .hero-continent {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(245,240,232,0.55);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .detail-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--cr);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+            z-index: 3;
+        }
+        .detail-close:hover { background: rgba(0,0,0,0.8); }
+
+        .detail-body {
+            padding: 20px 22px;
+        }
+
+        .section-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(245,240,232,0.35);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        /* ACTION BUTTONS - THE KEY FIX */
+        .detail-actions {
+            display: flex !important;
+            gap: 10px;
+            margin-bottom: 22px;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            font-family: 'Manrope', sans-serif;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-visited {
+            background: var(--tc);
+            color: var(--cr);
+            border-color: var(--tcd);
+        }
+        .btn-visited:hover {
+            background: var(--tcd);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(196, 98, 45, 0.3);
+        }
+        .btn-visited.active {
+            background: var(--tc);
+            border-color: var(--gd);
+            box-shadow: 0 0 0 3px rgba(212, 168, 75, 0.3);
+        }
+
+        .btn-not-visited {
+            background: rgba(255,255,255,0.06);
+            color: rgba(245, 240, 232, 0.75);
+            border-color: rgba(255,255,255,0.1);
+        }
+        .btn-not-visited:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--cr);
+        }
+        .btn-not-visited.active {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(245, 240, 232, 0.4);
+            color: var(--cr);
+        }
+
+        .detail-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .meta-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 11px 13px;
+            border-radius: 8px;
+        }
+        .meta-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(245,240,232,0.35);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .meta-value {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--cr);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            letter-spacing: 0.02em;
+        }
+        .badge-visited {
+            background: rgba(196,98,45,0.18);
+            color: var(--tcl);
+            border: 1px solid rgba(196,98,45,0.3);
+        }
+        .badge-not {
+            background: rgba(255,255,255,0.06);
+            color: rgba(245,240,232,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .detail-panel { width: 100%; }
+            header { padding: 0 16px; }
+            .header-stats { gap: 14px; }
+        }
     </style>
 </head>
 <body>
+
 <header>
-    <div class="logo">wanderlog</div>
+    <div class="logo">wander<em>log</em></div>
+
     <div class="header-stats">
-        <div class="stat-item"><div class="stat-number" id="visitedCount">0</div><div class="stat-label">Countries</div></div>
-        <div class="stat-item"><div class="stat-number" id="percentCount">0%</div><div class="stat-label">World</div></div>
+        <div class="stat-item">
+            <div class="stat-number" id="visitedCount">0</div>
+            <div class="stat-label">Countries</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number" id="continentCount">0</div>
+            <div class="stat-label">Continents</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number" id="percentCount">0%</div>
+            <div class="stat-label">World</div>
+        </div>
     </div>
+
     <div class="nav-tabs">
         <button class="nav-tab active">Map</button>
         <button class="nav-tab">Stats</button>
@@ -95,6 +569,7 @@
 </header>
 
 <div class="main-layout">
+
     <div class="sidebar">
         <div class="sidebar-header">Countries by Continent</div>
         <div id="continentsList"></div>
@@ -102,19 +577,25 @@
 
     <div class="map-container" id="mapContainer">
         <svg id="world-map"></svg>
+
         <div class="map-controls">
-            <button class="control-btn active" onclick="setProjection('natural')">Flat</button>
-            <button class="control-btn" onclick="setProjection('ortho')">Globe</button>
+            <button class="control-btn active" onclick="setProjection('natural', event)">Flat</button>
+            <button class="control-btn" onclick="setProjection('ortho', event)">Globe</button>
         </div>
+
         <div class="map-legend">
-            <div class="legend-title">Status</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: #10b981;"></div><span>Visited</span></div>
-            <div class="legend-row"><div class="legend-swatch" style="background: #1e293b;"></div><span>Not yet</span></div>
+            <div class="legend-title">Visit status</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: var(--tc)"></div> Visited</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: var(--lb)"></div> Not yet</div>
         </div>
+
         <div id="tooltip"></div>
+
         <div class="detail-panel" id="detailPanel">
             <div class="detail-hero">
-                <div class="hero-content">
+                <div class="hero-bg" id="heroBg"></div>
+                <div class="hero-gradient"></div>
+                <div class="hero-info">
                     <div class="hero-flag" id="heroFlag">🌍</div>
                     <div class="hero-name" id="heroName">Country</div>
                     <div class="hero-continent" id="heroContinent">Continent</div>
@@ -122,14 +603,23 @@
                 <button class="detail-close" onclick="closePanel()">✕</button>
             </div>
             <div class="detail-body">
-                <div class="section-label" style="margin-top: 0;">Mark as</div>
+                <div id="statusBadge" class="status-badge badge-not">Not yet visited</div>
+
+                <div class="section-label">Mark this country</div>
                 <div class="detail-actions">
                     <button class="action-btn btn-visited" id="btnVisited" onclick="markVisited()">✓ Visited</button>
-                    <button class="action-btn btn-not-visited" id="btnNotVisited" onclick="markNotVisited()">Not Yet</button>
+                    <button class="action-btn btn-not-visited active" id="btnNotVisited" onclick="markNotVisited()">Not Yet</button>
                 </div>
+
                 <div class="detail-meta">
-                    <div class="meta-item"><div class="meta-label">First Visit</div><div class="meta-value" id="firstVisit">—</div></div>
-                    <div class="meta-item"><div class="meta-label">Continent</div><div class="meta-value" id="metaContinent">—</div></div>
+                    <div class="meta-item">
+                        <div class="meta-label">First Visit</div>
+                        <div class="meta-value" id="firstVisit">—</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Region</div>
+                        <div class="meta-value" id="metaContinent">—</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -158,15 +648,45 @@ async function loadData() {
 }
 
 function renderSidebar() {
-    const continents = ['Africa', 'Antarctica', 'Asia', 'Europe', 'North America', 'Oceania', 'South America'];
+    const continents = ['Europe', 'Asia', 'Africa', 'North America', 'South America', 'Oceania', 'Antarctica'];
+    const icons = {'Africa':'🌍', 'Antarctica':'🧊', 'Asia':'🏔', 'Europe':'🏛', 'North America':'🦅', 'Oceania':'🏝', 'South America':'🦙'};
     let html = '';
+
     continents.forEach(continent => {
         const countries = Object.values(data.countries).filter(c => c.continent === continent);
         const visited = countries.filter(c => c.visited).length;
-        let countriesHtml = countries.map(c => '<div class="country-item ' + (c.visited ? 'visited' : '') + '" onclick="openPanel(\'' + c.iso3 + '\')"><div class="visit-dot ' + (c.visited ? 'visited' : '') + '"></div>' + c.name + '</div>').join('');
-        const icons = {'Africa':'🌍', 'Antarctica':'🧊', 'Asia':'🏔', 'Europe':'🏛', 'North America':'🦅', 'Oceania':'🏝', 'South America':'🦙'};
-        html += '<div class="continent-group"><div class="continent-header" onclick="toggleContinent(this)"><div class="continent-left"><span class="continent-icon">' + (icons[continent] || '🌐') + '</span><span class="continent-name">' + continent + '</span></div><div class="continent-count">' + visited + '/' + countries.length + '</div></div><div class="country-list open"><div class="country-list-inner">' + countriesHtml + '</div></div></div>';
+        const total = countries.length;
+        const percent = total > 0 ? (visited / total) : 0;
+        const dashOffset = 100.5 * (1 - percent);
+
+        let countriesHtml = countries.map(c => {
+            const visClass = c.visited ? 'visited' : '';
+            return '<div class="country-item ' + visClass + '" onclick="openPanel(\'' + c.iso3 + '\')"><div class="visit-dot ' + visClass + '"></div>' + c.name + '</div>';
+        }).join('');
+
+        const wasOpen = document.querySelector('[data-continent="' + continent + '"] .country-list');
+        const openClass = (wasOpen && wasOpen.classList.contains('open')) ? 'open' : '';
+
+        html += '<div class="continent-group" data-continent="' + continent + '">' +
+            '<div class="continent-header" onclick="toggleContinent(this)">' +
+                '<div class="continent-left">' +
+                    '<span class="continent-icon">' + (icons[continent] || '🌐') + '</span>' +
+                    '<span class="continent-name">' + continent + '</span>' +
+                '</div>' +
+                '<div class="progress-ring-wrap">' +
+                    '<svg viewBox="0 0 40 40" width="38" height="38">' +
+                        '<circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3.5"/>' +
+                        '<circle cx="20" cy="20" r="16" fill="none" stroke="#C4622D" stroke-width="3.5" stroke-dasharray="100.5" stroke-dashoffset="' + dashOffset.toFixed(1) + '" stroke-linecap="round"/>' +
+                    '</svg>' +
+                    '<div class="progress-ring-text">' + visited + '<br>/ ' + total + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="country-list ' + openClass + '">' +
+                '<div class="country-list-inner">' + countriesHtml + '</div>' +
+            '</div>' +
+        '</div>';
     });
+
     document.getElementById('continentsList').innerHTML = html;
 }
 
@@ -179,7 +699,11 @@ function updateStats() {
     const visited = countries.filter(c => c.visited).length;
     const total = countries.length;
     const percent = Math.round((visited / total) * 100);
+
+    const continentsWithVisits = new Set(countries.filter(c => c.visited).map(c => c.continent));
+
     document.getElementById('visitedCount').textContent = visited;
+    document.getElementById('continentCount').textContent = continentsWithVisits.size;
     document.getElementById('percentCount').textContent = percent + '%';
 }
 
@@ -187,15 +711,33 @@ function openPanel(iso3) {
     const country = data.countries[iso3];
     if (!country) return;
     currentCountryIso3 = iso3;
-    document.getElementById('heroFlag').textContent = iso3ToFlag(iso3);
+
+    document.getElementById('heroFlag').textContent = getFlagEmoji(country.iso2);
     document.getElementById('heroName').textContent = country.name;
     document.getElementById('heroContinent').textContent = country.continent;
     document.getElementById('metaContinent').textContent = country.continent;
     document.getElementById('firstVisit').textContent = country.year ? country.year : '—';
+
+    const heroBg = document.getElementById('heroBg');
+    const hash = iso3.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+    const hue1 = (hash * 7) % 60 + 10;
+    const hue2 = (hash * 13) % 60 + 180;
+    heroBg.style.background = 'linear-gradient(135deg, hsl(' + hue1 + ', 50%, 25%) 0%, hsl(' + hue2 + ', 40%, 30%) 100%)';
+
     const btnVisited = document.getElementById('btnVisited');
     const btnNotVisited = document.getElementById('btnNotVisited');
     btnVisited.classList.toggle('active', country.visited);
     btnNotVisited.classList.toggle('active', !country.visited);
+
+    const badge = document.getElementById('statusBadge');
+    if (country.visited) {
+        badge.textContent = '✓ Visited';
+        badge.className = 'status-badge badge-visited';
+    } else {
+        badge.textContent = 'Not yet visited';
+        badge.className = 'status-badge badge-not';
+    }
+
     document.getElementById('detailPanel').classList.add('open');
 }
 
@@ -206,16 +748,14 @@ function closePanel() {
 
 function markVisited() {
     if (!currentCountryIso3) return;
-    const country = data.countries[currentCountryIso3];
-    country.visited = true;
+    data.countries[currentCountryIso3].visited = true;
     localStorage.setItem('visited_' + currentCountryIso3, 'true');
     updateUI();
 }
 
 function markNotVisited() {
     if (!currentCountryIso3) return;
-    const country = data.countries[currentCountryIso3];
-    country.visited = false;
+    data.countries[currentCountryIso3].visited = false;
     localStorage.setItem('visited_' + currentCountryIso3, 'false');
     updateUI();
 }
@@ -224,7 +764,7 @@ function updateUI() {
     renderSidebar();
     updateStats();
     redrawMap();
-    openPanel(currentCountryIso3);
+    if (currentCountryIso3) openPanel(currentCountryIso3);
 }
 
 async function loadMap() {
@@ -234,20 +774,26 @@ async function loadMap() {
 }
 
 function renderMap() {
+    if (!worldData) return;
     const container = document.getElementById('mapContainer');
     const W = container.clientWidth;
     const H = container.clientHeight;
+
     d3.select('#world-map').selectAll('*').remove();
     const svg = d3.select('#world-map').attr('width', W).attr('height', H);
+
     let proj;
     if (projection === 'natural') {
         proj = d3.geoNaturalEarth1().scale(W / 6.3).translate([W / 2, H / 2]);
     } else {
         proj = d3.geoOrthographic().scale(Math.min(W, H) / 2.2).translate([W / 2, H / 2]).rotate([-15, -30]);
     }
+
     const path = d3.geoPath().projection(proj);
     const tooltip = document.getElementById('tooltip');
-    svg.append('path').datum({ type: 'Sphere' }).attr('d', path).attr('fill', '#0f172a');
+
+    svg.append('path').datum({ type: 'Sphere' }).attr('class', 'sphere').attr('d', path);
+
     const countries = topojson.feature(worldData, worldData.objects.countries);
     svg.selectAll('.country-path')
         .data(countries.features)
@@ -284,29 +830,28 @@ function renderMap() {
     }
 }
 
-function redrawMap() {
-    renderMap();
-}
+function redrawMap() { renderMap(); }
 
 function findCountryByNumericId(id) {
     return Object.values(data.countries).find(c => c.id === id);
 }
 
-function iso3ToFlag(iso2) {
-    const country = Object.values(data.countries).find(c => c.iso3 === iso2);
-    if (!country) return '🌍';
-    const iso = country.iso2;
-    return String.fromCodePoint(...[...iso.toUpperCase()].map(x => 127397 + x.charCodeAt()));
+function getFlagEmoji(iso2) {
+    if (!iso2 || iso2.length !== 2 || iso2 === '--') return '🏳️';
+    return String.fromCodePoint(...[...iso2.toUpperCase()].map(x => 127397 + x.charCodeAt()));
 }
 
-function setProjection(p) {
+function setProjection(p, event) {
     projection = p;
     document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event) event.target.classList.add('active');
     renderMap();
 }
 
+window.addEventListener('resize', () => { if (worldData) renderMap(); });
+
 loadData();
 </script>
+
 </body>
 </html>
