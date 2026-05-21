@@ -1,8 +1,9 @@
 {
   "meta": {
-    "lastUpdated": "",
+    "lastUpdated": "2026-05",
     "unCount": 193,
-    "unPlusCount": 265
+    "unPlusCount": 265,
+    "source": "UN member states + NomadMania UN+ list (territories, dependencies, de facto states)"
   },
   "countries": [
     {"id":4,  "iso3":"AFG","iso2":"AF","name":"Afghanistan",                  "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
@@ -87,6 +88,7 @@
     {"id":372,"iso3":"IRL","iso2":"IE","name":"Ireland",                      "continent":"Europe",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":376,"iso3":"ISR","iso2":"IL","name":"Israel",                       "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":380,"iso3":"ITA","iso2":"IT","name":"Italy",                        "continent":"Europe",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
+    {"id":384,"iso3":"CIV","iso2":"CI","name":"Ivory Coast",                  "continent":"Africa",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":388,"iso3":"JAM","iso2":"JM","name":"Jamaica",                      "continent":"North America", "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":392,"iso3":"JPN","iso2":"JP","name":"Japan",                        "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":400,"iso3":"JOR","iso2":"JO","name":"Jordan",                       "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
@@ -255,6 +257,24 @@
     {"id":612,"iso3":"PCN","iso2":"PN","name":"Pitcairn Islands",             "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":239,"iso3":"SGS","iso2":"GS","name":"South Georgia",                "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":732,"iso3":"ESH","iso2":"EH","name":"Western Sahara",               "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":10, "iso3":"ATA","iso2":"AQ","name":"Antarctica",                   "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]}
+    {"id":10, "iso3":"ATA","iso2":"AQ","name":"Antarctica",                   "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+
+    {"id":86, "iso3":"IOT","iso2":"IO","name":"British Indian Ocean Territory","continent":"Africa",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":744,"iso3":"SJM","iso2":"SJ","name":"Svalbard and Jan Mayen",        "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":74, "iso3":"BVT","iso2":"BV","name":"Bouvet Island",                 "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":334,"iso3":"HMD","iso2":"HM","name":"Heard and McDonald Islands",    "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":260,"iso3":"ATF","iso2":"TF","name":"French Southern Territories",   "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":581,"iso3":"UMI","iso2":"UM","name":"US Minor Outlying Islands",     "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+
+    {"id":null,"iso3":"ASC","iso2":"AC","name":"Ascension Island",             "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"TAA","iso2":"TA","name":"Tristan da Cunha",             "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"EAS","iso2":"--","name":"Easter Island",                "continent":"South America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"GAL","iso2":"--","name":"Galápagos Islands",            "continent":"South America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"HAW","iso2":"--","name":"Hawaii",                       "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"CNR","iso2":"IC","name":"Canary Islands",               "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"MAD","iso2":"--","name":"Madeira",                      "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"AZO","iso2":"--","name":"Azores",                       "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"SIC","iso2":"--","name":"Sicily",                       "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"SRD","iso2":"--","name":"Sardinia",                     "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]}
   ]
 }
