@@ -2,8 +2,8 @@
   "meta": {
     "lastUpdated": "2026-05",
     "unCount": 193,
-    "unPlusCount": 265,
-    "source": "UN member states + NomadMania UN+ list (territories, dependencies, de facto states)"
+    "unPlusCount": 266,
+    "source": "193 UN member states + NomadMania UN+ list (territories, dependencies, de facto states, autonomous regions)"
   },
   "countries": [
     {"id":4,  "iso3":"AFG","iso2":"AF","name":"Afghanistan",                  "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
@@ -212,8 +212,6 @@
     {"id":null,"iso3":"TRS","iso2":"--","name":"Transnistria",                "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":null,"iso3":"SOM","iso2":"--","name":"Somaliland",                  "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":null,"iso3":"NCY","iso2":"--","name":"Northern Cyprus",             "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"NKO","iso2":"--","name":"Nagorno-Karabakh",            "continent":"Asia",          "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-
     {"id":304,"iso3":"GRL","iso2":"GL","name":"Greenland",                    "continent":"North America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":234,"iso3":"FRO","iso2":"FO","name":"Faroe Islands",                "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":292,"iso3":"GIB","iso2":"GI","name":"Gibraltar",                    "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
@@ -236,7 +234,9 @@
     {"id":533,"iso3":"ABW","iso2":"AW","name":"Aruba",                        "continent":"North America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":531,"iso3":"CUW","iso2":"CW","name":"Curaçao",                      "continent":"North America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":534,"iso3":"SXM","iso2":"SX","name":"Sint Maarten",                 "continent":"North America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":535,"iso3":"BES","iso2":"BQ","name":"Bonaire, Sint Eustatius & Saba","continent":"North America","unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"BON","iso2":"--","name":"Bonaire",                     "continent":"North America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"SEU","iso2":"--","name":"Sint Eustatius",              "continent":"North America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"SAB","iso2":"--","name":"Saba",                        "continent":"North America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":258,"iso3":"PYF","iso2":"PF","name":"French Polynesia",             "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":540,"iso3":"NCL","iso2":"NC","name":"New Caledonia",                "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":474,"iso3":"MTQ","iso2":"MQ","name":"Martinique",                   "continent":"North America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
@@ -255,26 +255,25 @@
     {"id":162,"iso3":"CXR","iso2":"CX","name":"Christmas Island",             "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":166,"iso3":"CCK","iso2":"CC","name":"Cocos (Keeling) Islands",      "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":612,"iso3":"PCN","iso2":"PN","name":"Pitcairn Islands",             "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":239,"iso3":"SGS","iso2":"GS","name":"South Georgia",                "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":732,"iso3":"ESH","iso2":"EH","name":"Western Sahara",               "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":10, "iso3":"ATA","iso2":"AQ","name":"Antarctica",                   "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":744,"iso3":"SJM","iso2":"SJ","name":"Spitsbergen",                  "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"ASC","iso2":"AC","name":"Ascension Island",            "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"TAA","iso2":"TA","name":"Tristan da Cunha",            "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
 
-    {"id":86, "iso3":"IOT","iso2":"IO","name":"British Indian Ocean Territory","continent":"Africa",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":744,"iso3":"SJM","iso2":"SJ","name":"Svalbard and Jan Mayen",        "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":74, "iso3":"BVT","iso2":"BV","name":"Bouvet Island",                 "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":334,"iso3":"HMD","iso2":"HM","name":"Heard and McDonald Islands",    "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":260,"iso3":"ATF","iso2":"TF","name":"French Southern Territories",   "continent":"Antarctica",    "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":581,"iso3":"UMI","iso2":"UM","name":"US Minor Outlying Islands",     "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-
-    {"id":null,"iso3":"ASC","iso2":"AC","name":"Ascension Island",             "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"TAA","iso2":"TA","name":"Tristan da Cunha",             "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"EAS","iso2":"--","name":"Easter Island",                "continent":"South America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"GAL","iso2":"--","name":"Galápagos Islands",            "continent":"South America", "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"HAW","iso2":"--","name":"Hawaii",                       "continent":"Oceania",       "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"CNR","iso2":"IC","name":"Canary Islands",               "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"MAD","iso2":"--","name":"Madeira",                      "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"AZO","iso2":"--","name":"Azores",                       "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"SIC","iso2":"--","name":"Sicily",                       "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
-    {"id":null,"iso3":"SRD","iso2":"--","name":"Sardinia",                     "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]}
+    {"id":null,"iso3":"ALD","iso2":"AX","name":"Åland Islands",               "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"ENG","iso2":"--","name":"England",                     "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"SCO","iso2":"--","name":"Scotland",                    "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"WLS","iso2":"--","name":"Wales",                       "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"NIR","iso2":"--","name":"Northern Ireland",            "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"RSK","iso2":"--","name":"Republika Srpska",            "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"CRM","iso2":"--","name":"Crimea",                      "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"CHE","iso2":"--","name":"Chechnya",                    "continent":"Asia",          "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"DAG","iso2":"--","name":"Dagestan",                    "continent":"Asia",          "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"ING","iso2":"--","name":"Ingushetia",                  "continent":"Asia",          "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"TVA","iso2":"--","name":"Tuva",                        "continent":"Asia",          "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"KUR","iso2":"--","name":"Iraqi Kurdistan",             "continent":"Asia",          "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"TIB","iso2":"--","name":"Tibet",                       "continent":"Asia",          "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"PUN","iso2":"--","name":"Puntland",                    "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]}
   ]
 }

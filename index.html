@@ -1060,18 +1060,29 @@ const customCoords = {
     'TRS': { lon: 29.5, lat: 47.2 },      // Transnistria
     'SOM': { lon: 45.5, lat: 9.5 },       // Somaliland
     'NCY': { lon: 33.4, lat: 35.3 },      // Northern Cyprus
-    'NKO': { lon: 46.7, lat: 39.8 },      // Nagorno-Karabakh
+    'CRM': { lon: 34.0, lat: 45.0 },      // Crimea
+    'KUR': { lon: 44.0, lat: 36.18 },     // Iraqi Kurdistan
+    'TIB': { lon: 89.0, lat: 31.0 },      // Tibet
+    'PUN': { lon: 49.0, lat: 8.4 },       // Puntland
+    // Autonomous regions
+    'ALD': { lon: 20.04, lat: 60.18 },    // Åland Islands
+    'CHE': { lon: 45.69, lat: 43.31 },    // Chechnya
+    'DAG': { lon: 47.50, lat: 42.98 },    // Dagestan
+    'ING': { lon: 44.81, lat: 43.17 },    // Ingushetia
+    'TVA': { lon: 94.4, lat: 51.7 },      // Tuva
+    'RSK': { lon: 17.19, lat: 44.77 },    // Republika Srpska
+    // UK constituent countries
+    'ENG': { lon: -1.0, lat: 52.5 },      // England
+    'SCO': { lon: -4.0, lat: 56.5 },      // Scotland
+    'WLS': { lon: -3.7, lat: 52.0 },      // Wales
+    'NIR': { lon: -6.0, lat: 54.6 },      // Northern Ireland
     // Subdivisions
     'ASC': { lon: -14.36, lat: -7.95 },   // Ascension Island
     'TAA': { lon: -12.3, lat: -37.1 },    // Tristan da Cunha
-    'EAS': { lon: -109.4, lat: -27.1 },   // Easter Island
-    'GAL': { lon: -90.97, lat: -0.95 },   // Galápagos
-    'HAW': { lon: -156.7, lat: 20.7 },    // Hawaii
-    'CNR': { lon: -15.5, lat: 28.3 },     // Canary Islands
-    'MAD': { lon: -17.0, lat: 32.75 },    // Madeira
-    'AZO': { lon: -28.0, lat: 38.0 },     // Azores
-    'SIC': { lon: 14.0, lat: 37.6 },      // Sicily
-    'SRD': { lon: 9.1, lat: 40.1 },       // Sardinia
+    // Caribbean Dutch (formerly BES)
+    'BON': { lon: -68.27, lat: 12.18 },   // Bonaire
+    'SEU': { lon: -62.98, lat: 17.49 },   // Sint Eustatius
+    'SAB': { lon: -63.23, lat: 17.63 },   // Saba
 
     // ─── PACIFIC ISLAND NATIONS (small, hard to see) ───
     'TON': { lon: -175.2, lat: -21.2 },   // Tonga
@@ -1096,7 +1107,6 @@ const customCoords = {
     'NCL': { lon: 165.6,  lat: -21.5 },   // New Caledonia
     'NFK': { lon: 167.95, lat: -29.0 },   // Norfolk Island
     'PCN': { lon: -130.1, lat: -25.07 },  // Pitcairn
-    'UMI': { lon: -167.0, lat: 18.0 },    // US Minor Outlying Islands
 
     // ─── CARIBBEAN SMALL ISLANDS ───
     'ATG': { lon: -61.8, lat: 17.06 },    // Antigua & Barbuda
@@ -1113,7 +1123,6 @@ const customCoords = {
     'SXM': { lon: -63.06, lat: 18.04 },   // Sint Maarten
     'ABW': { lon: -69.97, lat: 12.52 },   // Aruba
     'CUW': { lon: -68.97, lat: 12.17 },   // Curaçao
-    'BES': { lon: -68.27, lat: 12.18 },   // Bonaire
     'AIA': { lon: -63.05, lat: 18.22 },   // Anguilla
     'MSR': { lon: -62.18, lat: 16.74 },   // Montserrat
     'VGB': { lon: -64.6,  lat: 18.43 },   // British Virgin Islands
@@ -1140,7 +1149,6 @@ const customCoords = {
     'SYC': { lon: 55.49, lat: -4.68 },    // Seychelles
     'MUS': { lon: 57.55, lat: -20.35 },   // Mauritius
     'COM': { lon: 43.33, lat: -11.65 },   // Comoros
-    'IOT': { lon: 71.5,  lat: -6.34 },    // BIOT (Chagos)
     'REU': { lon: 55.54, lat: -21.12 },   // Réunion
     'MYT': { lon: 45.17, lat: -12.83 },   // Mayotte
 
@@ -1161,8 +1169,7 @@ const customCoords = {
     // ─── INDIAN/AUS TERRITORIES ───
     'CXR': { lon: 105.69, lat: -10.49 },  // Christmas Island
     'CCK': { lon: 96.87,  lat: -12.18 },  // Cocos Islands
-    'GRL': { lon: -42.0,  lat: 71.7 },    // Greenland (huge but sparse, marker helps)
-    'SGS': { lon: -36.6,  lat: -54.4 }    // South Georgia
+    'GRL': { lon: -42.0,  lat: 71.7 }     // Greenland (huge but sparse, marker helps)
 };
 
 function renderMap() {
