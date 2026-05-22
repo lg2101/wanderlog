@@ -782,6 +782,11 @@ function renderSidebar() {
     let html = '';
     continents.forEach(continent => {
         const allCountries = Object.values(data.countries).filter(c => c.continent === continent);
+        // Sort: UN members first (alphabetical), then UN+ entries (alphabetical)
+        allCountries.sort((a, b) => {
+            if (a.unPlus !== b.unPlus) return a.unPlus ? 1 : -1;
+            return a.name.localeCompare(b.name);
+        });
         const filtered = showUnPlus ? allCountries : allCountries.filter(c => !c.unPlus);
         const visited = filtered.filter(c => c.visited).length;
         const total = filtered.length;
