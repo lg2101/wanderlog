@@ -2,8 +2,8 @@
   "meta": {
     "lastUpdated": "2026-05",
     "unCount": 193,
-    "unPlusCount": 265,
-    "source": "193 UN members + 72 UN+ extras = 265 total (matches NomadMania's count, with UK as one UN member)"
+    "unPlusCount": 266,
+    "source": "193 official UN members + 73 UN+ entries from NomadMania list = 266. (NomadMania's 265 excludes UK as a separate entry since they only list its 4 constituents; we keep both UK as UN member AND its 4 UK constituents in UN+)"
   },
   "countries": [
     {"id":4,  "iso3":"AFG","iso2":"AF","name":"Afghanistan",                  "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
@@ -262,6 +262,10 @@
     {"id":null,"iso3":"TAA","iso2":"TA","name":"Tristan da Cunha",            "continent":"Africa",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
 
     {"id":null,"iso3":"ALD","iso2":"AX","name":"Aland Islands",               "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"ENG","iso2":"--","name":"England",                     "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"SCO","iso2":"--","name":"Scotland",                    "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"WLS","iso2":"--","name":"Wales",                       "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
+    {"id":null,"iso3":"NIR","iso2":"--","name":"Northern Ireland",            "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":null,"iso3":"RSK","iso2":"--","name":"Bosnia and Herzegovina - Srpska","continent":"Europe",     "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":null,"iso3":"CRM","iso2":"--","name":"Crimea",                      "continent":"Europe",        "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
     {"id":null,"iso3":"CHC","iso2":"--","name":"Chechen Republic",            "continent":"Asia",          "unPlus":true, "visited":false,"year":null,"notes":"","photos":[]},
