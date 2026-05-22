@@ -626,8 +626,9 @@
 
 <!-- ─── FIREBASE INITIALIZATION ─── -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-    import {
+try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
+    const {
         getAuth,
         createUserWithEmailAndPassword,
         signInWithEmailAndPassword,
@@ -636,13 +637,13 @@
         GoogleAuthProvider,
         signInWithPopup,
         updateProfile
-    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-    import {
+    } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
+    const {
         getFirestore,
         doc,
         getDoc,
         setDoc
-    } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+    } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
 
     const firebaseConfig = {
         apiKey: "AIzaSyCcl25H8YWbjTuBJvCAELwNmviKUztaZbM",
@@ -650,15 +651,13 @@
         projectId: "wanderlog-65818",
         storageBucket: "wanderlog-65818.firebasestorage.app",
         messagingSenderId: "874160094723",
-        appId: "1:874160094723:web:f3ddc63ad27339fff89836",
-        measurementId: "G-FSN6DM2VC4"
+        appId: "1:874160094723:web:f3ddc63ad27339fff89836"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Expose Firebase API to global scope so the main script can use it
     window.fb = {
         signUp: async (email, password, displayName) => {
             const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -685,7 +684,12 @@
         }
     };
 
+    console.log('✓ Firebase loaded successfully');
     window.dispatchEvent(new CustomEvent('firebase-ready'));
+} catch (err) {
+    console.error('Firebase failed to load:', err);
+    window.fbLoadError = err.message || String(err);
+}
 </script>
 
 <script>
@@ -1417,6 +1421,19 @@ function switchAuthTab(mode) {
     document.getElementById('authError').style.display = 'none';
 }
 
+function waitForFirebase(timeoutMs) {
+    return new Promise((resolve, reject) => {
+        if (window.fb) return resolve();
+        const onReady = () => { window.removeEventListener('firebase-ready', onReady); resolve(); };
+        window.addEventListener('firebase-ready', onReady);
+        setTimeout(() => {
+            window.removeEventListener('firebase-ready', onReady);
+            if (window.fb) resolve();
+            else reject(new Error('Firebase failed to load. Check your network connection or browser ad-blocker, then refresh the page.'));
+        }, timeoutMs || 8000);
+    });
+}
+
 async function handleAuth() {
     const email = document.getElementById('emailInput').value.trim();
     const password = document.getElementById('passwordInput').value;
@@ -1428,6 +1445,7 @@ async function handleAuth() {
     submit.textContent = '…';
 
     try {
+        await waitForFirebase();
         if (authMode === 'signup') {
             await window.fb.signUp(email, password, name);
         } else {
@@ -1435,6 +1453,7 @@ async function handleAuth() {
         }
         closeAuthModal();
     } catch (err) {
+        console.error('Auth error:', err);
         const msg = friendlyAuthError(err);
         errorBox.textContent = msg;
         errorBox.style.display = 'block';
@@ -1445,11 +1464,14 @@ async function handleAuth() {
 }
 
 async function googleSignIn() {
+    const errorBox = document.getElementById('authError');
+    errorBox.style.display = 'none';
     try {
+        await waitForFirebase();
         await window.fb.googleSignIn();
         closeAuthModal();
     } catch (err) {
-        const errorBox = document.getElementById('authError');
+        console.error('Google sign-in error:', err);
         errorBox.textContent = friendlyAuthError(err);
         errorBox.style.display = 'block';
     }
