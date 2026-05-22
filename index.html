@@ -50,13 +50,55 @@
         .country-list { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
         .country-list.open { max-height: 2000px; }
         .country-list-inner { padding: 4px 10px 10px; }
-        .country-item { display: flex; align-items: center; gap: 9px; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; color: rgba(245, 240, 232, 0.5); transition: all 0.12s; }
-        .country-item:hover { background: rgba(255,255,255,0.05); color: var(--cr); }
+        .country-item { display: flex; align-items: center; gap: 6px; padding: 2px 4px 2px 8px; border-radius: 6px; font-size: 0.78rem; color: rgba(245, 240, 232, 0.5); transition: all 0.12s; }
+        .country-item:hover { background: rgba(255,255,255,0.04); }
         .country-item.visited { color: rgba(245, 240, 232, 0.92); font-weight: 500; }
-        .country-item.visited:hover { background: rgba(196, 98, 45, 0.12); }
+        .country-item.visited:hover { background: rgba(196, 98, 45, 0.08); }
+        .ci-clickable { display: flex; align-items: center; gap: 9px; flex: 1; cursor: pointer; min-width: 0; padding: 4px 0; }
+        .ci-clickable:hover { color: var(--cr); }
+        .ci-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .visit-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); }
         .visit-dot.visited { background: var(--tc); border-color: var(--tcd); box-shadow: 0 0 6px rgba(196,98,45,0.4); }
-        .un-tag { font-size: 0.55rem; padding: 1px 5px; background: rgba(45, 107, 127, 0.4); color: var(--tl); border-radius: 3px; margin-left: auto; font-weight: 600; letter-spacing: 0.05em; }
+        .un-tag { font-size: 0.55rem; padding: 1px 5px; background: rgba(45, 107, 127, 0.4); color: var(--tl); border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; flex-shrink: 0; }
+
+        /* SLIDING TOGGLE on each country row */
+        .ci-toggle {
+            width: 32px;
+            height: 18px;
+            border-radius: 11px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            padding: 0;
+            margin-left: 4px;
+        }
+        .ci-toggle::after {
+            content: "";
+            position: absolute;
+            top: 1.5px;
+            left: 1.5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(245,240,232,0.45);
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .ci-toggle:hover { border-color: rgba(212, 168, 75, 0.5); }
+        .ci-toggle:hover::after { background: rgba(245,240,232,0.75); }
+        .ci-toggle.on {
+            background: var(--tc);
+            border-color: var(--tcd);
+            box-shadow: 0 0 8px rgba(196,98,45,0.35);
+        }
+        .ci-toggle.on::after {
+            left: 15px;
+            background: var(--cr);
+        }
+        .ci-toggle.on:hover { background: var(--tcd); }
 
         .map-container { flex: 1; position: relative; overflow: hidden; background: var(--oc); }
         #world-map { width: 100%; height: 100%; display: block; }
@@ -750,7 +792,14 @@ function renderSidebar() {
         const countriesHtml = filtered.map(c => {
             const visClass = c.visited ? 'visited' : '';
             const unTag = c.unPlus ? '<span class="un-tag">UN+</span>' : '';
-            return '<div class="country-item ' + visClass + '" onclick="openPanel(\'' + c.iso3 + '\')"><div class="visit-dot ' + visClass + '"></div>' + c.name + unTag + '</div>';
+            return '<div class="country-item ' + visClass + '">' +
+                '<div class="ci-clickable" onclick="openPanel(\'' + c.iso3 + '\')">' +
+                    '<div class="visit-dot ' + visClass + '"></div>' +
+                    '<span class="ci-name">' + c.name + '</span>' +
+                    (c.unPlus ? unTag : '') +
+                '</div>' +
+                '<button class="ci-toggle ' + (c.visited ? 'on' : '') + '" onclick="toggleVisited(\'' + c.iso3 + '\')" title="' + (c.visited ? 'Mark as not visited' : 'Mark as visited') + '"></button>' +
+            '</div>';
         }).join('');
 
         const openClass = openStates[continent] ? 'open' : '';
@@ -855,6 +904,22 @@ function markNotVisited() {
     data.countries[currentCountryIso3].visited = false;
     localStorage.setItem('v_' + currentCountryIso3, 'false');
     refreshAll();
+}
+
+// Sidebar quick-toggle — works without opening the detail panel
+function toggleVisited(iso3) {
+    const country = data.countries[iso3];
+    if (!country) return;
+    country.visited = !country.visited;
+    localStorage.setItem('v_' + iso3, JSON.stringify(country.visited));
+    // Refresh UI
+    renderSidebar();
+    updateStats();
+    redrawMapColors();
+    // If the detail panel is currently showing this country, refresh it too
+    if (currentCountryIso3 === iso3) openPanel(iso3);
+    // Sync to cloud if logged in
+    if (typeof scheduleCloudSave === 'function') scheduleCloudSave();
 }
 
 function updateYear() {
