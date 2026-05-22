@@ -730,27 +730,31 @@ function renderMap() {
         });
 
     // ─── DRAW MARKERS for small/missing countries ───
-    // Renders for: (1) countries without ISO numeric IDs, (2) small countries hard to see at world scale
+    // One marker per country, always added to DOM. In globe mode, hidden via display
+    // when on the back hemisphere — updated by updateMarkersForGlobe on rotation.
     const markersGroup = g.append('g').attr('class', 'markers-layer');
 
-    // Helper that creates a marker for country c at a specific projected position
-    function makeMarker(c, lon, lat) {
-        const point = proj([lon, lat]);
+    Object.values(data.countries).forEach(c => {
+        const coords = customCoords[c.iso3];
+        if (!coords) return;
+
+        const point = proj([coords.lon, coords.lat]);
         if (!point || isNaN(point[0]) || isNaN(point[1])) return;
 
-        // For globe projection, only show markers on visible hemisphere
+        let display = null;
         if (projection === 'ortho') {
             const rotate = proj.rotate();
-            const angle = d3.geoDistance([lon, lat], [-rotate[0], -rotate[1]]);
-            if (angle > Math.PI / 2) return;
+            const angle = d3.geoDistance([coords.lon, coords.lat], [-rotate[0], -rotate[1]]);
+            if (angle > Math.PI / 2) display = 'none';
         }
 
         const visited = c.visited;
         const marker = markersGroup.append('g')
             .attr('class', 'marker' + (visited ? ' visited' : ''))
             .attr('data-iso3', c.iso3)
-            .attr('data-lon', lon)
-            .attr('data-lat', lat)
+            .attr('data-lon', coords.lon)
+            .attr('data-lat', coords.lat)
+            .style('display', display)
             .attr('transform', `translate(${point[0]}, ${point[1]})`);
 
         marker.append('circle').attr('class', 'marker-ring').attr('r', 14);
@@ -770,24 +774,6 @@ function renderMap() {
                 event.stopPropagation();
                 openPanel(c.iso3);
             });
-    }
-
-    Object.values(data.countries).forEach(c => {
-        const coords = customCoords[c.iso3];
-        if (!coords) return;
-
-        // Always render at original position
-        makeMarker(c, coords.lon, coords.lat);
-
-        // For islands near the antimeridian (date line), render a 2nd marker
-        // at lon ± 360° so they appear on BOTH sides of the world map.
-        // Tonga (-175) is just east of NZ in reality, but on a 0°-centered map
-        // it appears far-left while NZ is far-right. Adding +185 copy makes it
-        // also appear next to NZ on the right.
-        if (projection === 'natural') {
-            if (coords.lon < -100) makeMarker(c, coords.lon + 360, coords.lat);
-            else if (coords.lon > 100) makeMarker(c, coords.lon - 360, coords.lat);
-        }
     });
 
     if (projection === 'natural') {
