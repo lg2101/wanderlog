@@ -1,9 +1,9 @@
 {
   "meta": {
     "lastUpdated": "2026-05",
-    "unCount": 192,
-    "unPlusCount": 265,
-    "source": "NomadMania UN+ list (265 entries - UK split into England, Scotland, Wales, Northern Ireland)"
+    "unCount": 193,
+    "unPlusCount": 266,
+    "source": "193 UN members + NomadMania UN+ extras (73). Total 266 = NomadMania's 265 plus UK kept as a separate UN entry alongside its constituent countries."
   },
   "countries": [
     {"id":4,  "iso3":"AFG","iso2":"AF","name":"Afghanistan",                  "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
@@ -189,6 +189,7 @@
     {"id":800,"iso3":"UGA","iso2":"UG","name":"Uganda",                       "continent":"Africa",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":804,"iso3":"UKR","iso2":"UA","name":"Ukraine",                      "continent":"Europe",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":784,"iso3":"ARE","iso2":"AE","name":"United Arab Emirates",         "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
+    {"id":826,"iso3":"GBR","iso2":"GB","name":"United Kingdom",               "continent":"Europe",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":840,"iso3":"USA","iso2":"US","name":"United States",                "continent":"North America", "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":858,"iso3":"URY","iso2":"UY","name":"Uruguay",                      "continent":"South America", "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":860,"iso3":"UZB","iso2":"UZ","name":"Uzbekistan",                   "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
