@@ -44,7 +44,9 @@
         .continent-header { display: flex; align-items: center; justify-content: space-between; padding: 11px 18px; cursor: pointer; transition: background 0.15s; }
         .continent-header:hover { background: rgba(255,255,255,0.025); }
         .continent-left { display: flex; align-items: center; gap: 10px; }
-        .continent-icon { font-size: 1rem; }
+        .continent-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; color: var(--gd); opacity: 0.85; flex-shrink: 0; }
+        .continent-icon svg { width: 100%; height: 100%; }
+        .continent-header:hover .continent-icon { opacity: 1; color: var(--gdl); }
         .continent-name { font-family: 'Fraunces', serif; font-size: 0.92rem; font-style: italic; font-weight: 500; color: var(--cr); }
         .progress-ring-wrap { position: relative; width: 38px; height: 38px; flex-shrink: 0; }
         .progress-ring-wrap svg { transform: rotate(-90deg); position: absolute; inset: 0; }
@@ -106,13 +108,38 @@
         #world-map { width: 100%; height: 100%; display: block; }
         .country-path { fill: var(--lb); stroke: rgba(18,15,12,0.8); stroke-width: 0.4; cursor: pointer; transition: fill 0.2s; vector-effect: non-scaling-stroke; }
 
-        /* MARKERS for small countries / countries without map shapes */
-        .marker { cursor: pointer; transition: opacity 0.18s; }
-        .marker-circle { fill: #E8C870; stroke: #211F1C; stroke-width: 2; vector-effect: non-scaling-stroke; transition: fill 0.2s; filter: drop-shadow(0 0 3px rgba(0,0,0,0.7)); }
-        .marker.visited .marker-circle { fill: var(--tc); stroke: var(--gd); }
-        .marker:hover .marker-circle { fill: var(--gdl); stroke: var(--cr); }
-        .marker-ring { fill: none; stroke: var(--gd); stroke-width: 1.8; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity 0.2s; }
-        .marker:hover .marker-ring { opacity: 1; }
+        /* MARKERS — teardrop pin shape with country code */
+        .marker { cursor: pointer; transition: transform 0.15s; }
+        .marker-pin {
+            fill: #E8C870;
+            stroke: #211F1C;
+            stroke-width: 1.4;
+            vector-effect: non-scaling-stroke;
+            transition: all 0.2s;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+        }
+        .marker.visited .marker-pin { fill: var(--tc); stroke: var(--gd); }
+        .marker:hover .marker-pin { fill: var(--gdl); stroke: var(--cr); }
+        .marker-label {
+            fill: #211F1C;
+            font-family: 'Manrope', sans-serif;
+            font-size: 6.5px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            pointer-events: none;
+            user-select: none;
+        }
+        .marker.visited .marker-label { fill: var(--cr); }
+        .marker-ring {
+            fill: none;
+            stroke: var(--gd);
+            stroke-width: 1.5;
+            vector-effect: non-scaling-stroke;
+            opacity: 0;
+            transition: opacity 0.18s;
+        }
+        .marker:hover .marker-ring { opacity: 0.9; }
+        .marker:hover { transform-origin: 0 0; }
         .country-path:hover { fill: var(--gdl) !important; }
         .country-path.visited { fill: var(--tc); }
         .country-path.visited:hover { fill: var(--tcl) !important; }
@@ -772,7 +799,24 @@ async function loadData() {
 // ─── SIDEBAR ──────────────────────────────────────────
 function renderSidebar() {
     const continents = ['Europe', 'Asia', 'Africa', 'North America', 'South America', 'Oceania', 'Antarctica'];
-    const icons = {'Africa':'🌍', 'Antarctica':'🧊', 'Asia':'🏔', 'Europe':'🏛', 'North America':'🦅', 'Oceania':'🏝', 'South America':'🦙'};
+    // Custom SVG continent icons — clean line style, bohemian feel, fully distinct
+    const iconSvg = (path) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+    const icons = {
+        // Africa: Acacia tree silhouette
+        'Africa':        iconSvg('<path d="M12 22v-8"/><path d="M5 11c0-4 3-7 7-7s7 3 7 7c0 1.5-.5 2.5-2 3H7c-1.5-.5-2-1.5-2-3z"/><path d="M5 11c-1 0-2 .5-2 1.5M19 11c1 0 2 .5 2 1.5"/>'),
+        // Antarctica: 6-point snowflake
+        'Antarctica':    iconSvg('<path d="M12 2v20M3.34 7l17.32 10M3.34 17l17.32-10"/><path d="M10 4l2-2 2 2M10 20l2 2 2-2M5.5 9l-2.5 1 .5 2.5M21 12.5l-2.5-.5L18.5 9M5.5 15l-2.5-1 .5-2.5M21 11.5l-2.5.5L18.5 15"/>'),
+        // Asia: Mountain ranges
+        'Asia':          iconSvg('<path d="M2 20l5-8 3 4 4-7 4 5 4 6H2z"/><path d="M11 12l-1-1.5L12 8"/>'),
+        // Europe: Castle / classical building
+        'Europe':        iconSvg('<path d="M3 21V9h18v12zM3 21h18M7 9V6M11 9V4M13 9V4M17 9V6M9 21v-6h6v6M5 9h14"/>'),
+        // North America: Pine tree / wilderness
+        'North America': iconSvg('<path d="M12 3l-4 5h2l-4 5h2.5l-4 5h15l-4-5H18l-4-5h2zM12 18v3M9 21h6"/>'),
+        // Oceania: Palm tree with curved fronds
+        'Oceania':       iconSvg('<path d="M12 22v-9"/><path d="M12 13C9 11 5 10 3 13M12 13c3-2 7-3 9 0M12 13c-2-3-2-7 1-10M12 13c2-3 2-7-1-10"/>'),
+        // South America: Sun (Inca/Argentine style)
+        'South America': iconSvg('<circle cx="12" cy="12" r="3.5"/><path d="M12 4V2M12 22v-2M4 12H2M22 12h-2M6 6L4.5 4.5M19.5 19.5L18 18M6 18l-1.5 1.5M19.5 4.5L18 6"/>')
+    };
 
     const openStates = {};
     document.querySelectorAll('.continent-group').forEach(g => {
@@ -1275,8 +1319,23 @@ function renderMap() {
             .style('display', display)
             .attr('transform', `translate(${point[0]}, ${point[1]})`);
 
-        marker.append('circle').attr('class', 'marker-ring').attr('r', 14);
-        marker.append('circle').attr('class', 'marker-circle').attr('r', 6);
+        // Pin-shaped marker (teardrop), anchored at the tip
+        // Tip at (0,0), bulb centered at (0,-14), radius 8
+        marker.append('path')
+            .attr('class', 'marker-pin')
+            .attr('d', 'M0 0 L5 -8 A8 8 0 1 1 -5 -8 Z');
+
+        // Label inside the bulb showing country code
+        const codeText = c.iso2 && c.iso2 !== '--' ? c.iso2 : c.iso3.slice(0, 2);
+        marker.append('text')
+            .attr('class', 'marker-label')
+            .attr('x', 0)
+            .attr('y', -11)
+            .attr('text-anchor', 'middle')
+            .text(codeText.toUpperCase());
+
+        // Hover ring (only shows on hover)
+        marker.append('circle').attr('class', 'marker-ring').attr('r', 14).attr('cy', -10);
 
         marker
             .on('mousemove', (event) => {
@@ -1303,8 +1362,15 @@ function renderMap() {
                 g.attr('transform', event.transform);
                 // Counter-scale markers so they stay constant size
                 const k = event.transform.k;
-                g.selectAll('.marker-circle').attr('r', 6 / k);
-                g.selectAll('.marker-ring').attr('r', 14 / k);
+                g.selectAll('.marker').each(function() {
+                    const lon = parseFloat(this.getAttribute('data-lon'));
+                    const lat = parseFloat(this.getAttribute('data-lat'));
+                    if (isNaN(lon)) return;
+                    const pt = proj([lon, lat]);
+                    if (pt && !isNaN(pt[0])) {
+                        this.setAttribute('transform', `translate(${pt[0]}, ${pt[1]}) scale(${1/k})`);
+                    }
+                });
             });
         svg.call(mapZoom);
     } else {
