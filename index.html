@@ -24,6 +24,8 @@
         .header-stats { display: flex; gap: 24px; align-items: center; }
         .stat-item { text-align: center; }
         .stat-number { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 700; color: var(--tcl); line-height: 1; }
+        .stat-divider-slash { color: rgba(245, 240, 232, 0.25); margin: 0 2px; font-weight: 400; }
+        .stat-total { color: rgba(245, 240, 232, 0.45); font-weight: 500; font-size: 0.95rem; }
         .stat-label { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(245, 240, 232, 0.4); margin-top: 2px; font-weight: 500; }
         .stat-divider { width: 1px; height: 24px; background: rgba(212, 168, 75, 0.12); }
 
@@ -506,18 +508,18 @@
 
     <div class="header-stats">
         <div class="stat-item">
-            <div class="stat-number" id="visitedCount">0</div>
-            <div class="stat-label">Visited</div>
+            <div class="stat-number"><span id="unVisited">0</span><span class="stat-divider-slash">/</span><span class="stat-total">193</span></div>
+            <div class="stat-label">UN · <span id="unPercent">0%</span></div>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-            <div class="stat-number" id="continentCount">0</div>
+            <div class="stat-number"><span id="unPlusVisited">0</span><span class="stat-divider-slash">/</span><span class="stat-total">265</span></div>
+            <div class="stat-label">UN+ · <span id="unPlusPercent">0%</span></div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number"><span id="continentCount">0</span><span class="stat-divider-slash">/</span><span class="stat-total">7</span></div>
             <div class="stat-label">Continents</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-            <div class="stat-number" id="percentCount">0%</div>
-            <div class="stat-label">World</div>
         </div>
     </div>
 
@@ -782,12 +784,19 @@ function renderSidebar() {
     let html = '';
     continents.forEach(continent => {
         const allCountries = Object.values(data.countries).filter(c => c.continent === continent);
-        // Sort: UN members first (alphabetical), then UN+ entries (alphabetical)
+        // Sort: UN members first (alphabetical), then UN+ extras (alphabetical)
         allCountries.sort((a, b) => {
-            if (a.unPlus !== b.unPlus) return a.unPlus ? 1 : -1;
+            const aExtra = !a.inUN; // UN+ extras have inUN=false
+            const bExtra = !b.inUN;
+            if (aExtra !== bExtra) return aExtra ? 1 : -1;
             return a.name.localeCompare(b.name);
         });
-        const filtered = showUnPlus ? allCountries : allCountries.filter(c => !c.unPlus);
+        // Filter based on which list is being shown
+        // showUnPlus=true: show entries in UN+ list (inUNPlus=true)
+        // showUnPlus=false: show entries in UN list (inUN=true)
+        const filtered = showUnPlus
+            ? allCountries.filter(c => c.inUNPlus)
+            : allCountries.filter(c => c.inUN);
         const visited = filtered.filter(c => c.visited).length;
         const total = filtered.length;
         if (total === 0) return;
@@ -796,12 +805,13 @@ function renderSidebar() {
 
         const countriesHtml = filtered.map(c => {
             const visClass = c.visited ? 'visited' : '';
-            const unTag = c.unPlus ? '<span class="un-tag">UN+</span>' : '';
+            const isExtra = !c.inUN;
+            const unTag = isExtra ? '<span class="un-tag">UN+</span>' : '';
             return '<div class="country-item ' + visClass + '">' +
                 '<div class="ci-clickable" onclick="openPanel(\'' + c.iso3 + '\')">' +
                     '<div class="visit-dot ' + visClass + '"></div>' +
                     '<span class="ci-name">' + c.name + '</span>' +
-                    (c.unPlus ? unTag : '') +
+                    unTag +
                 '</div>' +
                 '<button class="ci-toggle ' + (c.visited ? 'on' : '') + '" onclick="toggleVisited(\'' + c.iso3 + '\')" title="' + (c.visited ? 'Mark as not visited' : 'Mark as visited') + '"></button>' +
             '</div>';
@@ -836,15 +846,26 @@ function toggleContinent(el) {
 
 // ─── STATS ─────────────────────────────────────────────
 function updateStats() {
-    const countries = Object.values(data.countries);
-    const filtered = showUnPlus ? countries : countries.filter(c => !c.unPlus);
-    const visited = filtered.filter(c => c.visited).length;
-    const total = filtered.length;
-    const percent = total > 0 ? Math.round((visited / total) * 100) : 0;
-    const continents = new Set(filtered.filter(c => c.visited).map(c => c.continent));
-    document.getElementById('visitedCount').textContent = visited;
+    const all = Object.values(data.countries);
+
+    // UN list: 193 entries with inUN=true
+    const unList = all.filter(c => c.inUN);
+    const unVisited = unList.filter(c => c.visited).length;
+    const unPercent = unList.length > 0 ? Math.round((unVisited / unList.length) * 100) : 0;
+
+    // UN+ list: 265 entries with inUNPlus=true
+    const unPlusList = all.filter(c => c.inUNPlus);
+    const unPlusVisited = unPlusList.filter(c => c.visited).length;
+    const unPlusPercent = unPlusList.length > 0 ? Math.round((unPlusVisited / unPlusList.length) * 100) : 0;
+
+    // Continents (using UN+ list, max 7)
+    const continents = new Set(unPlusList.filter(c => c.visited).map(c => c.continent));
+
+    document.getElementById('unVisited').textContent = unVisited;
+    document.getElementById('unPercent').textContent = unPercent + '%';
+    document.getElementById('unPlusVisited').textContent = unPlusVisited;
+    document.getElementById('unPlusPercent').textContent = unPlusPercent + '%';
     document.getElementById('continentCount').textContent = continents.size;
-    document.getElementById('percentCount').textContent = percent + '%';
 }
 
 // ─── UN TOGGLE ────────────────────────────────────────
@@ -864,7 +885,7 @@ function openPanel(iso3) {
 
     document.getElementById('heroFlag').textContent = getFlagEmoji(country.iso2);
     document.getElementById('heroName').textContent = country.name;
-    document.getElementById('heroContinent').textContent = country.continent + (country.unPlus ? ' • UN+' : '');
+    document.getElementById('heroContinent').textContent = country.continent + (!country.inUN ? ' • UN+' : '');
 
     const heroBg = document.getElementById('heroBg');
     const hash = iso3.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
