@@ -63,6 +63,7 @@
         .visit-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); }
         .visit-dot.visited { background: var(--tc); border-color: var(--tcd); box-shadow: 0 0 6px rgba(196,98,45,0.4); }
         .un-tag { font-size: 0.55rem; padding: 1px 5px; background: rgba(45, 107, 127, 0.4); color: var(--tl); border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; flex-shrink: 0; }
+        .un-tag.tcc-tag { background: rgba(212, 168, 75, 0.25); color: var(--gd); }
 
         /* SLIDING TOGGLE on each country row */
         .ci-toggle {
@@ -551,14 +552,20 @@
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
+            <div class="stat-number"><span id="tccVisited">0</span><span class="stat-divider-slash">/</span><span class="stat-total">330</span></div>
+            <div class="stat-label">TCC · <span id="tccPercent">0%</span></div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
             <div class="stat-number"><span id="continentCount">0</span><span class="stat-divider-slash">/</span><span class="stat-total">7</span></div>
             <div class="stat-label">Continents</div>
         </div>
     </div>
 
     <div class="un-toggle">
-        <button class="un-btn active" id="btn193" onclick="setUnMode(false)">193 UN</button>
-        <button class="un-btn" id="btn265" onclick="setUnMode(true)">265 UN+</button>
+        <button class="un-btn active" id="btn193" onclick="setListMode('un')">193 UN</button>
+        <button class="un-btn" id="btn265" onclick="setListMode('unplus')">265 UN+</button>
+        <button class="un-btn" id="btn330" onclick="setListMode('tcc')">330 TCC</button>
     </div>
 
     <div class="auth-area" id="authArea">
@@ -774,7 +781,7 @@ let data = { countries: {} };
 let currentCountryIso3 = null;
 let projection = 'natural';
 let worldData = null;
-let showUnPlus = false;
+let listMode = 'un'; // 'un' | 'unplus' | 'tcc'
 
 // ─── LOAD ─────────────────────────────────────────────
 async function loadData() {
@@ -826,19 +833,15 @@ function renderSidebar() {
     let html = '';
     continents.forEach(continent => {
         const allCountries = Object.values(data.countries).filter(c => c.continent === continent);
-        // Sort: UN members first (alphabetical), then UN+ extras (alphabetical)
+        // Sort: UN members first, then UN+ extras, then TCC-only extras (all alphabetical within tier)
+        const tier = c => c.inUN ? 0 : (c.inUNPlus ? 1 : 2);
         allCountries.sort((a, b) => {
-            const aExtra = !a.inUN; // UN+ extras have inUN=false
-            const bExtra = !b.inUN;
-            if (aExtra !== bExtra) return aExtra ? 1 : -1;
+            const ta = tier(a), tb = tier(b);
+            if (ta !== tb) return ta - tb;
             return a.name.localeCompare(b.name);
         });
         // Filter based on which list is being shown
-        // showUnPlus=true: show entries in UN+ list (inUNPlus=true)
-        // showUnPlus=false: show entries in UN list (inUN=true)
-        const filtered = showUnPlus
-            ? allCountries.filter(c => c.inUNPlus)
-            : allCountries.filter(c => c.inUN);
+        const filtered = allCountries.filter(c => inActiveList(c));
         const visited = filtered.filter(c => c.visited).length;
         const total = filtered.length;
         if (total === 0) return;
@@ -847,8 +850,10 @@ function renderSidebar() {
 
         const countriesHtml = filtered.map(c => {
             const visClass = c.visited ? 'visited' : '';
-            const isExtra = !c.inUN;
-            const unTag = isExtra ? '<span class="un-tag">UN+</span>' : '';
+            // Tag indicates which list category the entry belongs to (beyond UN)
+            let unTag = '';
+            if (!c.inUN && c.inUNPlus) unTag = '<span class="un-tag">UN+</span>';
+            else if (!c.inUN && !c.inUNPlus && c.inTCC) unTag = '<span class="un-tag tcc-tag">TCC</span>';
             return '<div class="country-item ' + visClass + '">' +
                 '<div class="ci-clickable" onclick="openPanel(\'' + c.iso3 + '\')">' +
                     '<div class="visit-dot ' + visClass + '"></div>' +
@@ -890,33 +895,48 @@ function toggleContinent(el) {
 function updateStats() {
     const all = Object.values(data.countries);
 
-    // UN list: 193 entries with inUN=true
+    // UN list: 193 entries
     const unList = all.filter(c => c.inUN);
     const unVisited = unList.filter(c => c.visited).length;
     const unPercent = unList.length > 0 ? Math.round((unVisited / unList.length) * 100) : 0;
 
-    // UN+ list: 265 entries with inUNPlus=true
+    // UN+ list: 265 entries
     const unPlusList = all.filter(c => c.inUNPlus);
     const unPlusVisited = unPlusList.filter(c => c.visited).length;
     const unPlusPercent = unPlusList.length > 0 ? Math.round((unPlusVisited / unPlusList.length) * 100) : 0;
 
-    // Continents (using UN+ list, max 7)
-    const continents = new Set(unPlusList.filter(c => c.visited).map(c => c.continent));
+    // TCC list: 330 entries
+    const tccList = all.filter(c => c.inTCC);
+    const tccVisited = tccList.filter(c => c.visited).length;
+    const tccPercent = tccList.length > 0 ? Math.round((tccVisited / tccList.length) * 100) : 0;
+
+    // Continents (using TCC list since it has the broadest set, max 7)
+    const continents = new Set(tccList.filter(c => c.visited).map(c => c.continent));
 
     document.getElementById('unVisited').textContent = unVisited;
     document.getElementById('unPercent').textContent = unPercent + '%';
     document.getElementById('unPlusVisited').textContent = unPlusVisited;
     document.getElementById('unPlusPercent').textContent = unPlusPercent + '%';
+    document.getElementById('tccVisited').textContent = tccVisited;
+    document.getElementById('tccPercent').textContent = tccPercent + '%';
     document.getElementById('continentCount').textContent = continents.size;
 }
 
-// ─── UN TOGGLE ────────────────────────────────────────
-function setUnMode(unPlus) {
-    showUnPlus = unPlus;
-    document.getElementById('btn193').classList.toggle('active', !unPlus);
-    document.getElementById('btn265').classList.toggle('active', unPlus);
+// ─── LIST MODE TOGGLE ─────────────────────────────────
+function setListMode(mode) {
+    listMode = mode;
+    document.getElementById('btn193').classList.toggle('active', mode === 'un');
+    document.getElementById('btn265').classList.toggle('active', mode === 'unplus');
+    document.getElementById('btn330').classList.toggle('active', mode === 'tcc');
     renderSidebar();
     updateStats();
+}
+
+// Helper: which entries are currently filtered in (based on mode)
+function inActiveList(c) {
+    if (listMode === 'un') return c.inUN;
+    if (listMode === 'unplus') return c.inUNPlus;
+    return c.inTCC;
 }
 
 // ─── PANEL ─────────────────────────────────────────────
@@ -1237,7 +1257,97 @@ const customCoords = {
     // ─── INDIAN/AUS TERRITORIES ───
     'CXR': { lon: 105.69, lat: -10.49 },  // Christmas Island
     'CCK': { lon: 96.87,  lat: -12.18 },  // Cocos Islands
-    'GRL': { lon: -42.0,  lat: 71.7 }     // Greenland (huge but sparse, marker helps)
+    'GRL': { lon: -42.0,  lat: 71.7 },    // Greenland (huge but sparse, marker helps)
+
+    // ─── TCC-only entries (regions/subdivisions not in UN or NomadMania UN+) ───
+    // UAE emirates
+    'ABDB': { lon: 54.37, lat: 24.45 },   // Abu Dhabi
+    'AJM':  { lon: 55.50, lat: 25.40 },   // Ajman
+    'DXB':  { lon: 55.30, lat: 25.20 },   // Dubai
+    'FUJ':  { lon: 56.30, lat: 25.10 },   // Fujairah
+    'RAK':  { lon: 55.95, lat: 25.80 },   // Ras Al Khaimah
+    'SHJ':  { lon: 55.40, lat: 25.40 },   // Sharjah
+    'UAQ':  { lon: 55.60, lat: 25.55 },   // Umm Al Qaiwain
+    // USA regions
+    'AKK':  { lon: -150, lat: 64 },       // Alaska
+    'HAW':  { lon: -156.7, lat: 20.7 },   // Hawaiian Islands
+    // Indian territories
+    'ANI':  { lon: 92.5, lat: 11.5 },     // Andaman-Nicobar
+    'LKD':  { lon: 73, lat: 10 },         // Lakshadweep
+    'SKM':  { lon: 88.5, lat: 27.6 },     // Sikkim
+    'KSH':  { lon: 75, lat: 34 },         // Kashmir
+    // Indonesia subdivisions
+    'IDN-J': { lon: 110, lat: -7.5 },     // Java
+    'IDN-K': { lon: 113.9, lat: 1 },      // Kalimantan
+    'IDN-S': { lon: 121, lat: -2 },       // Sulawesi
+    'IDN-SM': { lon: 102, lat: 0 },       // Sumatra
+    'IDN-P': { lon: 138, lat: -4 },       // West Papua
+    'MLK':  { lon: 128, lat: -3 },        // Maluku Islands
+    'LSU':  { lon: 119, lat: -9 },        // Lesser Sunda Islands
+    // Antarctic territories
+    'AAA':  { lon: -60, lat: -75 },       // Argentine Antarctica
+    'AAT':  { lon: 90, lat: -75 },        // Australian Antarctic Territory
+    'BAT':  { lon: -65, lat: -75 },       // British Antarctic Territory
+    'CAT':  { lon: -75, lat: -75 },       // Chilean Antarctic Territory
+    'FAR':  { lon: 70, lat: -55 },        // French Antarctica
+    'NZA':  { lon: 165, lat: -80 },       // New Zealand Antarctica
+    'NDA':  { lon: 5, lat: -72 },         // Norwegian Antarctica
+    'SGS':  { lon: -36.6, lat: -54.4 },   // South Georgia & Sandwich
+    // Pacific
+    'AUS-I': { lon: -150, lat: -23 },     // Austral Islands
+    'BIS':  { lon: 151, lat: -4 },        // Bismarck Archipelago
+    'CHT':  { lon: -176.5, lat: -44 },    // Chatham Islands
+    'LHI':  { lon: 159.1, lat: -31.5 },   // Lord Howe Island
+    'LPI':  { lon: -157, lat: -3 },       // Line/Phoenix Islands
+    'MQI':  { lon: -139.5, lat: -9 },     // Marquesas Islands
+    'MID':  { lon: -177.4, lat: 28.2 },   // Midway Island
+    'WAK':  { lon: 166.6, lat: 19.3 },    // Wake Island
+    'TAS':  { lon: 146.5, lat: -42 },     // Tasmania
+    // Mediterranean / Europe islands
+    'BAL':  { lon: 2.6, lat: 39.6 },      // Balearic Islands
+    'COR':  { lon: 9.0, lat: 42 },        // Corsica
+    'CRT':  { lon: 25, lat: 35.2 },       // Crete
+    'GAI':  { lon: 26, lat: 38 },         // Greek Aegean Islands
+    'ION':  { lon: 20.5, lat: 38.5 },     // Ionian Islands
+    'LAM':  { lon: 12.6, lat: 35.5 },     // Lampedusa
+    'SRD':  { lon: 9.1, lat: 40.1 },      // Sardinia
+    'SIC':  { lon: 14.0, lat: 37.6 },     // Sicily
+    'AZO':  { lon: -28, lat: 38 },        // Azores
+    'MAD':  { lon: -17.0, lat: 32.75 },   // Madeira
+    'CNR':  { lon: -15.5, lat: 28.3 },    // Canary Islands
+    'KGD':  { lon: 20.5, lat: 54.7 },     // Kaliningrad
+    // Asia subdivisions
+    'CYP-B': { lon: 33.7, lat: 34.7 },    // Cyprus British SBA
+    'HAI':  { lon: 110, lat: 19 },        // Hainan Island
+    'JEJ':  { lon: 126.5, lat: 33.4 },    // Jeju Island
+    'OGS':  { lon: 142, lat: 27 },        // Ogasawara
+    'RYU':  { lon: 128, lat: 26.5 },      // Ryukyu Islands
+    'SBH':  { lon: 117, lat: 5.5 },       // Sabah
+    'SWK':  { lon: 113, lat: 2.5 },       // Sarawak
+    'NXC':  { lon: 45.4, lat: 39.2 },     // Nakhchivan
+    'SOC':  { lon: 53.9, lat: 12.5 },     // Socotra
+    'TUR-A': { lon: 35, lat: 39 },        // Turkey (Asia)
+    'TUR-E': { lon: 28, lat: 41.2 },      // Turkey (Europe)
+    'EGY-A': { lon: 31, lat: 27 },        // Egypt (Africa)
+    'EGY-S': { lon: 33.7, lat: 29.5 },    // Egypt (Sinai)
+    'RUS-A': { lon: 100, lat: 60 },       // Russia in Asia
+    // Africa subdivisions
+    'CAB':  { lon: 12.2, lat: -5.5 },     // Cabinda
+    'GNQ-B': { lon: 8.7, lat: 3.5 },      // Equatorial Guinea (Bioko)
+    'GNQ-M': { lon: 10.5, lat: 1.6 },     // Equatorial Guinea (Rio Muni)
+    'MAR-S': { lon: -3, lat: 35.4 },      // Spanish Morocco
+    'PEI':  { lon: 38, lat: -46.6 },      // Prince Edward Islands
+    'ROD':  { lon: 63.4, lat: -19.7 },    // Rodriguez Island
+    'ZNZ':  { lon: 39.3, lat: -6.1 },     // Zanzibar
+    'ZES':  { lon: 53, lat: -7 },         // Zil Elwannyen Sesel (Seychelles outer)
+    // Caribbean / Americas
+    'EAS':  { lon: -109.4, lat: -27.1 },  // Easter Island
+    'GAL':  { lon: -90.97, lat: -0.95 },  // Galapagos
+    'JFI':  { lon: -79, lat: -33.6 },     // Juan Fernandez Islands
+    'FDN':  { lon: -32.4, lat: -3.85 },   // Fernando de Noronha
+    'NES':  { lon: -63.9, lat: 11 },      // Nueva Esparta
+    'SAP':  { lon: -81.7, lat: 12.55 },   // San Andres
+    'NVS':  { lon: -62.6, lat: 17.16 }    // Nevis
 };
 
 function renderMap() {
