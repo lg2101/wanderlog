@@ -1,9 +1,9 @@
 {
   "meta": {
     "lastUpdated": "2026-05",
-    "unCount": 193,
-    "unPlusCount": 266,
-    "source": "193 official UN members + 73 UN+ entries from NomadMania list = 266. (NomadMania's 265 excludes UK as a separate entry since they only list its 4 constituents; we keep both UK as UN member AND its 4 UK constituents in UN+)"
+    "unCount": 192,
+    "unPlusCount": 265,
+    "source": "Exact match to NomadMania UN+ list: 192 UN members (UK omitted; represented by its 4 constituent countries in UN+) + 73 UN+ entries = 265 total"
   },
   "countries": [
     {"id":4,  "iso3":"AFG","iso2":"AF","name":"Afghanistan",                  "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
@@ -189,7 +189,6 @@
     {"id":800,"iso3":"UGA","iso2":"UG","name":"Uganda",                       "continent":"Africa",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":804,"iso3":"UKR","iso2":"UA","name":"Ukraine",                      "continent":"Europe",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":784,"iso3":"ARE","iso2":"AE","name":"United Arab Emirates",         "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
-    {"id":826,"iso3":"GBR","iso2":"GB","name":"United Kingdom",               "continent":"Europe",        "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":840,"iso3":"USA","iso2":"US","name":"United States",                "continent":"North America", "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":858,"iso3":"URY","iso2":"UY","name":"Uruguay",                      "continent":"South America", "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
     {"id":860,"iso3":"UZB","iso2":"UZ","name":"Uzbekistan",                   "continent":"Asia",          "unPlus":false,"visited":false,"year":null,"notes":"","photos":[]},
