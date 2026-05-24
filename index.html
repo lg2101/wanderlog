@@ -10,8 +10,8 @@
     <style>
         :root {
             --tc: #C4622D; --tcl: #D4845A; --tcd: #9E4E24; --tcdeep: #6B2510;
-            --tl: #2D6B7F; --cr: #F5F0E8; --ch: #211F1C; --gd: #D4A84B;
-            --gdl: #E8C870; --oc: #172B38; --lb: #3A3530;
+            --tl: #D88B30; --cr: #F5F0E8; --ch: #211F1C; --gd: #D4A84B;
+            --gdl: #E8C870; --oc: #172B38; --lb: #404040;
             --panel: rgba(20, 18, 16, 0.97);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -65,9 +65,9 @@
         .visit-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); }
         .visit-dot.visited { background: var(--tc); border-color: var(--tcd); box-shadow: 0 0 6px rgba(196,98,45,0.4); }
         /* Category-tinted visited dots */
-        .cat-unplus .visit-dot.visited { background: var(--tl); border-color: #1d4f5e; box-shadow: 0 0 6px rgba(45, 107, 127, 0.45); }
+        .cat-unplus .visit-dot.visited { background: var(--tl); border-color: #a06520; box-shadow: 0 0 6px rgba(216, 139, 48, 0.45); }
         .cat-tcc .visit-dot.visited { background: var(--gd); border-color: #a07c30; box-shadow: 0 0 6px rgba(212, 168, 75, 0.5); }
-        .un-tag { font-size: 0.55rem; padding: 1px 5px; background: rgba(45, 107, 127, 0.4); color: var(--tl); border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; flex-shrink: 0; }
+        .un-tag { font-size: 0.55rem; padding: 1px 5px; background: rgba(216, 139, 48, 0.4); color: var(--tl); border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; flex-shrink: 0; }
         .un-tag.tcc-tag { background: rgba(212, 168, 75, 0.25); color: var(--gd); }
 
         /* SLIDING TOGGLE on each country row */
@@ -103,7 +103,7 @@
             border-color: var(--tcd);
             box-shadow: 0 0 8px rgba(196,98,45,0.35);
         }
-        .cat-unplus .ci-toggle.on { background: var(--tl); border-color: #1d4f5e; box-shadow: 0 0 8px rgba(45, 107, 127, 0.4); }
+        .cat-unplus .ci-toggle.on { background: var(--tl); border-color: #a06520; box-shadow: 0 0 8px rgba(216, 139, 48, 0.4); }
         .cat-tcc .ci-toggle.on { background: var(--gd); border-color: #a07c30; box-shadow: 0 0 8px rgba(212, 168, 75, 0.45); }
         .ci-toggle.on::after {
             left: 15px;
@@ -118,6 +118,13 @@
         /* MARKERS — circular flag badges */
         .marker { cursor: pointer; transition: transform 0.15s; }
         body.hide-markers .marker { display: none; }
+        /* Per-category hide: greys out countries & hides markers */
+        body.hide-cat-un .country-path.cat-un.visited { fill: var(--lb); }
+        body.hide-cat-unplus .country-path.cat-unplus.visited { fill: var(--lb); }
+        body.hide-cat-tcc .country-path.cat-tcc.visited { fill: var(--lb); }
+        body.hide-cat-un .marker.cat-un { display: none; }
+        body.hide-cat-unplus .marker.cat-unplus { display: none; }
+        body.hide-cat-tcc .marker.cat-tcc { display: none; }
         .marker-bg {
             fill: rgba(33, 31, 28, 0.9);
             stroke: rgba(232, 200, 112, 0.6);
@@ -190,6 +197,12 @@
         .legend-row { display: flex; align-items: center; gap: 9px; font-size: 0.73rem; color: rgba(245,240,232,0.6); margin-bottom: 5px; }
         .legend-row:last-child { margin-bottom: 0; }
         .legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+        .legend-row.clickable { cursor: pointer; padding: 2px 6px; margin-left: -6px; border-radius: 4px; transition: background 0.15s; user-select: none; }
+        .legend-row.clickable:hover { background: rgba(255,255,255,0.06); color: var(--cr); }
+        .legend-cross { margin-left: auto; opacity: 0; transition: opacity 0.15s; font-size: 0.7rem; color: rgba(245,240,232,0.5); }
+        .legend-row.muted { opacity: 0.4; }
+        .legend-row.muted .legend-swatch { filter: grayscale(1); }
+        .legend-row.muted .legend-cross { opacity: 1; color: var(--tcl); }
 
         /* DETAIL PANEL */
         .detail-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 400px; background: var(--panel); border-left: 1px solid rgba(212,168,75,0.15); transform: translateX(100%); transition: transform 0.32s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; z-index: 250; backdrop-filter: blur(10px); }
@@ -220,8 +233,8 @@
         .btn-visited:hover { background: var(--tcd); }
         .btn-visited.active { box-shadow: 0 0 0 3px rgba(212,168,75,0.4); border-color: var(--gd); }
         /* Category-tinted action button */
-        .detail-panel.cat-unplus .btn-visited { background: var(--tl); border-color: #1d4f5e; }
-        .detail-panel.cat-unplus .btn-visited:hover { background: #1d4f5e; }
+        .detail-panel.cat-unplus .btn-visited { background: var(--tl); border-color: #a06520; }
+        .detail-panel.cat-unplus .btn-visited:hover { background: #a06520; }
         .detail-panel.cat-tcc .btn-visited { background: var(--gd); border-color: #a07c30; color: var(--ch); }
         .detail-panel.cat-tcc .btn-visited:hover { background: #a07c30; color: var(--cr); }
         .btn-not-visited { background: rgba(255,255,255,0.06); color: rgba(245,240,232,0.75); border-color: rgba(255,255,255,0.12); }
@@ -748,9 +761,18 @@
 
         <div class="map-legend">
             <div class="legend-title">Map</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: var(--tc)"></div> UN visited</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: var(--tl)"></div> UN+ visited</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: var(--gd)"></div> TCC visited</div>
+            <div class="legend-row clickable" data-cat="un" onclick="toggleCategoryHide('un')" title="Click to hide/show UN entries">
+                <div class="legend-swatch" style="background: var(--tc)"></div> UN visited
+                <span class="legend-cross">✕</span>
+            </div>
+            <div class="legend-row clickable" data-cat="unplus" onclick="toggleCategoryHide('unplus')" title="Click to hide/show UN+ entries">
+                <div class="legend-swatch" style="background: var(--tl)"></div> UN+ visited
+                <span class="legend-cross">✕</span>
+            </div>
+            <div class="legend-row clickable" data-cat="tcc" onclick="toggleCategoryHide('tcc')" title="Click to hide/show TCC entries">
+                <div class="legend-swatch" style="background: var(--gd)"></div> TCC visited
+                <span class="legend-cross">✕</span>
+            </div>
             <div class="legend-row"><div class="legend-swatch" style="background: var(--lb)"></div> Not yet visited</div>
         </div>
 
@@ -885,6 +907,7 @@ let projection = 'natural';
 let worldData = null;
 let listMode = 'un'; // 'un' | 'unplus' | 'tcc'
 let hideSmall = false; // when true, hide all small countries/territories (anything with a marker)
+let hideCat = { un: false, unplus: false, tcc: false }; // per-category visibility
 
 // ─── LOAD ─────────────────────────────────────────────
 async function loadData() {
@@ -1037,20 +1060,38 @@ function setListMode(mode) {
     updateStats();
 }
 
-// Helper: which entries are currently filtered in (based on mode + small-country filter)
+// Helper: which entries are currently filtered in (based on mode + small-country filter + category filter)
+function entryCategory(c) {
+    if (c.inUN) return 'un';
+    if (c.inUNPlus) return 'unplus';
+    return 'tcc';
+}
+
 function inActiveList(c) {
-    if (hideSmall && customCoords[c.iso3]) return false;  // hide marker-only entries
+    if (hideSmall && customCoords[c.iso3]) return false;
+    if (hideCat[entryCategory(c)]) return false;
     if (listMode === 'un') return c.inUN;
     if (listMode === 'unplus') return c.inUNPlus;
     return c.inTCC;
 }
 
-// Toggle: hide small countries (markers + sidebar list entries)
+// Toggle: hide small countries
 function toggleHideSmall() {
     hideSmall = !hideSmall;
     document.getElementById('smallToggleBtn').classList.toggle('active', hideSmall);
     document.getElementById('smallToggleBtn').textContent = hideSmall ? 'Show all' : 'Hide small';
     document.body.classList.toggle('hide-markers', hideSmall);
+    renderSidebar();
+    updateStats();
+    redrawMapColors();
+}
+
+// Toggle: hide a specific category
+function toggleCategoryHide(cat) {
+    hideCat[cat] = !hideCat[cat];
+    document.body.classList.toggle('hide-cat-' + cat, hideCat[cat]);
+    const row = document.querySelector('.legend-row[data-cat="' + cat + '"]');
+    if (row) row.classList.toggle('muted', hideCat[cat]);
     renderSidebar();
     updateStats();
     redrawMapColors();
