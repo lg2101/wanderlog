@@ -33,7 +33,10 @@
         .un-toggle { display: flex; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 3px; border: 1px solid rgba(255,255,255,0.08); }
         .un-btn { padding: 6px 14px; border-radius: 6px; font-size: 0.74rem; font-weight: 600; cursor: pointer; color: rgba(245, 240, 232, 0.45); border: none; background: none; transition: all 0.18s; font-family: inherit; }
         .un-btn:hover { color: rgba(245, 240, 232, 0.85); }
-        .un-btn.active { background: var(--tl); color: var(--cr); }
+        /* Each top button uses its own category color when active */
+        #btn193.active { background: var(--tc);  color: var(--cr); }   /* UN  → dark orange */
+        #btn265.active { background: var(--tl);  color: var(--cr); }   /* UN+ → light orange */
+        #btn330.active { background: var(--gd);  color: var(--ch); }   /* TCC → gold (dark text for contrast) */
 
         .main-layout { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 280px; background: rgba(16, 14, 12, 0.96); border-right: 1px solid rgba(212, 168, 75, 0.08); overflow-y: auto; overflow-x: hidden; flex-shrink: 0; padding-bottom: 40px; scrollbar-gutter: stable; }
