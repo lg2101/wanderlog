@@ -64,6 +64,9 @@
         .ci-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .visit-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); }
         .visit-dot.visited { background: var(--tc); border-color: var(--tcd); box-shadow: 0 0 6px rgba(196,98,45,0.4); }
+        /* Category-tinted visited dots */
+        .cat-unplus .visit-dot.visited { background: var(--tl); border-color: #1d4f5e; box-shadow: 0 0 6px rgba(45, 107, 127, 0.45); }
+        .cat-tcc .visit-dot.visited { background: var(--gd); border-color: #a07c30; box-shadow: 0 0 6px rgba(212, 168, 75, 0.5); }
         .un-tag { font-size: 0.55rem; padding: 1px 5px; background: rgba(45, 107, 127, 0.4); color: var(--tl); border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; flex-shrink: 0; }
         .un-tag.tcc-tag { background: rgba(212, 168, 75, 0.25); color: var(--gd); }
 
@@ -100,6 +103,8 @@
             border-color: var(--tcd);
             box-shadow: 0 0 8px rgba(196,98,45,0.35);
         }
+        .cat-unplus .ci-toggle.on { background: var(--tl); border-color: #1d4f5e; box-shadow: 0 0 8px rgba(45, 107, 127, 0.4); }
+        .cat-tcc .ci-toggle.on { background: var(--gd); border-color: #a07c30; box-shadow: 0 0 8px rgba(212, 168, 75, 0.45); }
         .ci-toggle.on::after {
             left: 15px;
             background: var(--cr);
@@ -122,6 +127,8 @@
             filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
         }
         .marker.visited .marker-bg { stroke: var(--tc); stroke-width: 2.5; }
+        .marker.cat-unplus.visited .marker-bg { stroke: var(--tl); }
+        .marker.cat-tcc.visited .marker-bg { stroke: var(--gd); }
         .marker:hover .marker-bg { stroke: var(--gdl); stroke-width: 2.5; }
         .marker-flag {
             font-size: 12px;
@@ -153,6 +160,11 @@
         .country-path:hover { fill: var(--gdl) !important; }
         .country-path.visited { fill: var(--tc); }
         .country-path.visited:hover { fill: var(--tcl) !important; }
+        /* Category tinting for visited country shapes */
+        .country-path.cat-unplus.visited { fill: var(--tl); }
+        .country-path.cat-unplus.visited:hover { fill: var(--tcl) !important; }
+        .country-path.cat-tcc.visited { fill: var(--gd); }
+        .country-path.cat-tcc.visited:hover { fill: var(--gdl) !important; }
         .sphere { fill: var(--oc); }
 
         #tooltip { position: absolute; background: rgba(18,16,14,0.95); border: 1px solid rgba(212,168,75,0.25); color: var(--cr); padding: 8px 14px; border-radius: 7px; font-size: 0.8rem; pointer-events: none; opacity: 0; transition: opacity 0.12s; white-space: nowrap; backdrop-filter: blur(6px); z-index: 300; }
@@ -207,6 +219,11 @@
         .btn-visited { background: var(--tc); color: var(--cr); border-color: var(--tcd); }
         .btn-visited:hover { background: var(--tcd); }
         .btn-visited.active { box-shadow: 0 0 0 3px rgba(212,168,75,0.4); border-color: var(--gd); }
+        /* Category-tinted action button */
+        .detail-panel.cat-unplus .btn-visited { background: var(--tl); border-color: #1d4f5e; }
+        .detail-panel.cat-unplus .btn-visited:hover { background: #1d4f5e; }
+        .detail-panel.cat-tcc .btn-visited { background: var(--gd); border-color: #a07c30; color: var(--ch); }
+        .detail-panel.cat-tcc .btn-visited:hover { background: #a07c30; color: var(--cr); }
         .btn-not-visited { background: rgba(255,255,255,0.06); color: rgba(245,240,232,0.75); border-color: rgba(255,255,255,0.12); }
         .btn-not-visited:hover { background: rgba(255,255,255,0.12); color: var(--cr); }
         .btn-not-visited.active { background: rgba(255,255,255,0.15); border-color: rgba(245,240,232,0.4); color: var(--cr); }
@@ -731,9 +748,10 @@
 
         <div class="map-legend">
             <div class="legend-title">Map</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: var(--tc)"></div> Country visited</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: var(--lb)"></div> Country not yet</div>
-            <div class="legend-row"><div class="legend-swatch" style="background: #E8C870; border-radius:50%; border:2px solid #211F1C; box-sizing:border-box;"></div> Small country marker</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: var(--tc)"></div> UN visited</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: var(--tl)"></div> UN+ visited</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: var(--gd)"></div> TCC visited</div>
+            <div class="legend-row"><div class="legend-swatch" style="background: var(--lb)"></div> Not yet visited</div>
         </div>
 
         <div id="tooltip"></div>
@@ -935,11 +953,13 @@ function renderSidebar() {
 
         const countriesHtml = filtered.map(c => {
             const visClass = c.visited ? 'visited' : '';
-            // Tag indicates which list category the entry belongs to (beyond UN)
+            // Category class for color coding
+            const catClass = c.inUN ? 'cat-un' : (c.inUNPlus ? 'cat-unplus' : 'cat-tcc');
+            // Tag shown for entries beyond UN
             let unTag = '';
             if (!c.inUN && c.inUNPlus) unTag = '<span class="un-tag">UN+</span>';
             else if (!c.inUN && !c.inUNPlus && c.inTCC) unTag = '<span class="un-tag tcc-tag">TCC</span>';
-            return '<div class="country-item ' + visClass + '">' +
+            return '<div class="country-item ' + visClass + ' ' + catClass + '">' +
                 '<div class="ci-clickable" onclick="openPanel(\'' + c.iso3 + '\')">' +
                     '<div class="visit-dot ' + visClass + '"></div>' +
                     '<span class="ci-name">' + c.name + '</span>' +
@@ -1044,13 +1064,23 @@ function openPanel(iso3) {
 
     document.getElementById('heroFlag').textContent = getFlagEmoji(country.iso2);
     document.getElementById('heroName').textContent = country.name;
-    document.getElementById('heroContinent').textContent = country.continent + (!country.inUN ? ' • UN+' : '');
+    // Category label below country name
+    let catLabel = country.continent;
+    if (!country.inUN && country.inUNPlus) catLabel += ' • UN+';
+    else if (!country.inUN && !country.inUNPlus && country.inTCC) catLabel += ' • TCC';
+    document.getElementById('heroContinent').textContent = catLabel;
 
     const heroBg = document.getElementById('heroBg');
     const hash = iso3.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
     const h1 = (hash * 7) % 60 + 10;
     const h2 = (hash * 13) % 80 + 180;
     heroBg.style.background = 'linear-gradient(135deg, hsl(' + h1 + ',55%,28%) 0%, hsl(' + h2 + ',45%,32%) 100%)';
+
+    // Apply category class to detail panel for color theming
+    const panel = document.getElementById('detailPanel');
+    panel.classList.remove('cat-un', 'cat-unplus', 'cat-tcc');
+    const cat = country.inUN ? 'cat-un' : (country.inUNPlus ? 'cat-unplus' : 'cat-tcc');
+    panel.classList.add(cat);
 
     document.getElementById('btnVisited').classList.toggle('active', country.visited);
     document.getElementById('btnNotVisited').classList.toggle('active', !country.visited);
@@ -1485,7 +1515,8 @@ function renderMap() {
         .append('path')
         .attr('class', d => {
             const c = findCountryByNumericId(d.id);
-            return 'country-path' + (c && c.visited ? ' visited' : '');
+            const cat = !c ? 'cat-un' : (c.inUN ? 'cat-un' : (c.inUNPlus ? 'cat-unplus' : 'cat-tcc'));
+            return 'country-path ' + cat + (c && c.visited ? ' visited' : '');
         })
         .attr('d', path)
         .on('mousemove', (event, d) => {
@@ -1523,8 +1554,9 @@ function renderMap() {
         }
 
         const visited = c.visited;
+        const cat = c.inUN ? 'cat-un' : (c.inUNPlus ? 'cat-unplus' : 'cat-tcc');
         const marker = markersGroup.append('g')
-            .attr('class', 'marker' + (visited ? ' visited' : ''))
+            .attr('class', 'marker ' + cat + (visited ? ' visited' : ''))
             .attr('data-iso3', c.iso3)
             .attr('data-lon', coords.lon)
             .attr('data-lat', coords.lat)
@@ -1642,7 +1674,8 @@ function redrawMapColors() {
     d3.select('#world-map').selectAll('.country-path')
         .attr('class', d => {
             const c = findCountryByNumericId(d.id);
-            return 'country-path' + (c && c.visited ? ' visited' : '');
+            const cat = !c ? 'cat-un' : (c.inUN ? 'cat-un' : (c.inUNPlus ? 'cat-unplus' : 'cat-tcc'));
+            return 'country-path ' + cat + (c && c.visited ? ' visited' : '');
         });
     // Also update markers
     d3.select('#world-map').selectAll('.marker').each(function() {
