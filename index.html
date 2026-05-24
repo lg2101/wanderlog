@@ -510,6 +510,48 @@
         }
         .modal-close:hover { color: var(--cr); }
 
+        /* ─── SHARE / READ-ONLY UI ─── */
+        .share-toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; cursor: pointer; user-select: none; }
+        .switch { position: relative; display: inline-block; width: 42px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.12); border-radius: 22px; transition: 0.2s; }
+        .switch-slider::before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: var(--cr); border-radius: 50%; transition: 0.2s; }
+        .switch input:checked + .switch-slider { background: var(--tc); }
+        .switch input:checked + .switch-slider::before { transform: translateX(20px); }
+
+        .share-url-box { display: flex; gap: 6px; }
+        .share-url-box input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 9px 12px; color: var(--cr); font-size: 0.78rem; font-family: 'Space Mono', monospace; }
+        .share-url-box button { background: var(--tc); color: var(--cr); border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.82rem; font-family: inherit; transition: background 0.18s; }
+        .share-url-box button:hover { background: var(--tcd); }
+        .share-url-box button.copied { background: var(--sg); }
+        .share-hint { font-size: 0.72rem; color: rgba(245, 240, 232, 0.45); margin-top: 10px; font-style: italic; line-height: 1.5; }
+
+        /* Viewing banner shown on top when looking at someone else's profile */
+        .viewing-banner {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            background: linear-gradient(135deg, var(--tcdeep) 0%, var(--tcd) 100%);
+            color: var(--cr); padding: 9px 20px; font-size: 0.85rem; font-weight: 500;
+            border-bottom: 1px solid rgba(212, 168, 75, 0.3); z-index: 250;
+            position: relative; flex-shrink: 0;
+        }
+        .viewing-icon { font-size: 1rem; }
+        .viewing-exit { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: var(--cr); padding: 4px 12px; border-radius: 16px; cursor: pointer; font-size: 0.75rem; font-weight: 600; font-family: inherit; transition: background 0.18s; }
+        .viewing-exit:hover { background: rgba(255,255,255,0.25); }
+
+        /* Read-only mode: hide all editing controls */
+        body.read-only .ci-toggle,
+        body.read-only .detail-actions,
+        body.read-only .photo-upload-cta,
+        body.read-only .photo-upload-hint,
+        body.read-only .photo-add,
+        body.read-only .photo-remove,
+        body.read-only #signInBtn,
+        body.read-only #userMenu { display: none !important; }
+        body.read-only #yearInput,
+        body.read-only #notesInput { pointer-events: none; opacity: 0.75; background: rgba(255,255,255,0.03) !important; }
+        body.read-only .yearInput,
+        body.read-only .notesInput { pointer-events: none; }
+
         .save-indicator {
             position: fixed;
             bottom: 20px;
@@ -579,6 +621,7 @@
             </div>
             <div class="user-dropdown" id="userDropdown">
                 <div class="dropdown-email" id="dropdownEmail">user@example.com</div>
+                <button class="dropdown-item" onclick="openShareModal()">↗ Share profile</button>
                 <button class="dropdown-item" onclick="signOutUser()">↪ Sign Out</button>
             </div>
         </div>
@@ -615,6 +658,41 @@
 </div>
 
 <div class="save-indicator" id="saveIndicator">☁ Saved to cloud</div>
+
+<!-- ─── SHARE PROFILE MODAL ─── -->
+<div class="modal-backdrop" id="shareModal" onclick="if(event.target===this)closeShareModal()">
+    <div class="auth-modal" style="position:relative;">
+        <button class="modal-close" onclick="closeShareModal()">✕</button>
+        <div class="modal-title">Share Profile</div>
+        <div class="modal-subtitle">Let others view your travels (read-only)</div>
+
+        <label class="share-toggle-row">
+            <span>Make profile public</span>
+            <span class="switch">
+                <input type="checkbox" id="publicToggle" onchange="togglePublic()">
+                <span class="switch-slider"></span>
+            </span>
+        </label>
+
+        <div id="shareUrlSection" style="display:none">
+            <div class="form-label" style="margin-top: 14px;">Your share link</div>
+            <div class="share-url-box">
+                <input type="text" id="shareUrl" readonly>
+                <button id="copyBtn" onclick="copyShareUrl()">Copy</button>
+            </div>
+            <p class="share-hint">Anyone with this link can view your visited countries, years, and notes — but they can't edit anything. Photos stored locally in your browser won't appear in shared view.</p>
+        </div>
+
+        <div id="shareErr" class="auth-error" style="display:none"></div>
+    </div>
+</div>
+
+<!-- ─── VIEWING PROFILE BANNER ─── -->
+<div class="viewing-banner" id="viewingBanner" style="display:none">
+    <span class="viewing-icon">👁</span>
+    Viewing <strong id="viewingName">someone</strong>'s travels — read-only
+    <button class="viewing-exit" onclick="exitViewMode()">Back to my profile</button>
+</div>
 
 <div class="main-layout">
     <div class="sidebar">
@@ -1814,6 +1892,125 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// ─── SHARE PROFILE ────────────────────────────────────
+let viewingProfile = null;  // uid being viewed (read-only), or null when on own profile
+
+async function openShareModal() {
+    document.getElementById('userDropdown').classList.remove('open');
+    if (!currentUser) {
+        alert('Please sign in first to share your profile.');
+        return;
+    }
+    document.getElementById('shareModal').classList.add('open');
+    document.getElementById('shareErr').style.display = 'none';
+    // Load current public state from cloud
+    try {
+        const d = await window.fb.loadCloud(currentUser.uid);
+        const isPublic = d && d.public === true;
+        document.getElementById('publicToggle').checked = isPublic;
+        updateShareUrlVisibility(isPublic);
+    } catch (e) {
+        console.error('Failed to load profile state', e);
+    }
+}
+
+function closeShareModal() {
+    document.getElementById('shareModal').classList.remove('open');
+}
+
+function updateShareUrlVisibility(isPublic) {
+    document.getElementById('shareUrlSection').style.display = isPublic ? 'block' : 'none';
+    if (isPublic && currentUser) {
+        const url = window.location.origin + window.location.pathname + '?u=' + currentUser.uid;
+        document.getElementById('shareUrl').value = url;
+    }
+}
+
+async function togglePublic() {
+    const isPublic = document.getElementById('publicToggle').checked;
+    if (!currentUser) return;
+    try {
+        const displayName = currentUser.displayName || currentUser.email?.split('@')[0] || 'Traveler';
+        await window.fb.saveCloud(currentUser.uid, {
+            public: isPublic,
+            displayName: displayName
+        });
+        updateShareUrlVisibility(isPublic);
+    } catch (e) {
+        console.error('Failed to update public flag', e);
+        document.getElementById('shareErr').textContent = 'Could not update: ' + (e.message || e);
+        document.getElementById('shareErr').style.display = 'block';
+        // Revert toggle visually
+        document.getElementById('publicToggle').checked = !isPublic;
+    }
+}
+
+async function copyShareUrl() {
+    const input = document.getElementById('shareUrl');
+    try {
+        await navigator.clipboard.writeText(input.value);
+    } catch (e) {
+        input.select();
+        document.execCommand('copy');
+    }
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+}
+
+function enterReadOnlyMode(displayName) {
+    document.body.classList.add('read-only');
+    document.getElementById('viewingBanner').style.display = 'flex';
+    document.getElementById('viewingName').textContent = displayName || 'Anonymous traveler';
+}
+
+function exitViewMode() {
+    // Strip URL params and reload
+    window.location.href = window.location.pathname;
+}
+
+// Try to load a public profile by uid (called early from init if ?u=<uid> is in URL)
+async function tryLoadPublicProfile(uid) {
+    try {
+        await waitForFirebase();
+        const profile = await window.fb.loadCloud(uid);
+        if (!profile || !profile.public) {
+            // Not public — show notice and fall back to own data
+            const banner = document.getElementById('viewingBanner');
+            banner.style.display = 'flex';
+            banner.style.background = 'linear-gradient(135deg, #5a3030, #8a3a3a)';
+            document.getElementById('viewingName').textContent = '? — that profile isn\'t public';
+            return false;
+        }
+        viewingProfile = uid;
+        // Apply the visited / year / notes data (Firestore structure: profile.countries[iso3])
+        const cloudCountries = profile.countries || {};
+        Object.values(data.countries).forEach(c => {
+            const ent = cloudCountries[c.iso3];
+            if (ent) {
+                c.visited = !!ent.visited;
+                c.year = ent.year || null;
+                c.notes = ent.notes || '';
+            } else {
+                c.visited = false;
+                c.year = null;
+                c.notes = '';
+            }
+            // Don't show local-storage photos when viewing someone else (those are device-local)
+            c.localPhotos = [];
+        });
+        enterReadOnlyMode(profile.displayName);
+        renderSidebar();
+        updateStats();
+        redrawMapColors();
+        return true;
+    } catch (e) {
+        console.error('Failed to load public profile', e);
+        return false;
+    }
+}
+
 // ─── CLOUD DATA MERGE & SAVE ─────────────────────────────
 async function mergeCloudData() {
     if (!currentUser || !window.fb) return;
@@ -1910,7 +2107,17 @@ updateNotes = function() {
     scheduleCloudSave();
 };
 
-loadData();
+// ─── INIT FLOW ────────────────────────────────────────
+async function init() {
+    await loadData();  // load static country list + map
+    // Check if URL has ?u=<uid> for viewing someone's public profile
+    const params = new URLSearchParams(window.location.search);
+    const viewUid = params.get('u');
+    if (viewUid) {
+        await tryLoadPublicProfile(viewUid);
+    }
+}
+init();
 </script>
 
 </body>
