@@ -205,24 +205,26 @@
         .legend-row.muted .legend-swatch { filter: grayscale(1); }
         .legend-row.muted .legend-cross { opacity: 1; color: var(--tcl); }
 
-        /* "Not yet visited" row indicator */
+        /* "Visited" swatch: tri-color gradient (terracotta + amber + gold) */
+        .swatch-visited { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; background: linear-gradient(135deg, var(--tc) 0%, var(--tc) 33%, var(--tl) 33%, var(--tl) 66%, var(--gd) 66%); }
+        /* "Not yet visited" swatch */
         .swatch-notvisited { background: var(--lb); width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; transition: background 0.2s; }
-        body.highlight-notvisited .swatch-notvisited { background: var(--bl); box-shadow: 0 0 0 1px rgba(74,144,226,0.4); }
-        .legend-highlight-ind { margin-left: auto; opacity: 0; transition: opacity 0.15s; color: var(--bl); font-size: 0.6rem; }
-        body.highlight-notvisited .legend-row[data-cat="notvisited"] .legend-highlight-ind { opacity: 1; }
 
-        /* Highlight not-visited elements in blue across map + sidebar */
-        body.highlight-notvisited .country-path:not(.visited) { fill: var(--bl); }
-        body.highlight-notvisited .country-path:not(.visited):hover { fill: #6BA6E8 !important; }
-        body.highlight-notvisited .marker:not(.visited) .marker-bg {
-            stroke: var(--bl);
-            stroke-width: 2.5;
-        }
-        body.highlight-notvisited .visit-dot:not(.visited) {
+        /* "Hide visited" filter: fade visited entries, highlight unvisited in blue */
+        body.hide-visited .country-path.visited { opacity: 0.12; }
+        body.hide-visited .marker.visited { opacity: 0.12; pointer-events: none; }
+        body.hide-visited .country-path:not(.visited) { fill: var(--bl); }
+        body.hide-visited .country-path:not(.visited):hover { fill: #6BA6E8 !important; }
+        body.hide-visited .marker:not(.visited) .marker-bg { stroke: var(--bl); stroke-width: 2.5; }
+        body.hide-visited .visit-dot:not(.visited) {
             background: var(--bl);
             border-color: var(--bld);
             box-shadow: 0 0 5px rgba(74,144,226,0.3);
         }
+
+        /* "Hide not visited" filter: fade unvisited entries */
+        body.hide-notvisited .country-path:not(.visited) { opacity: 0.15; }
+        body.hide-notvisited .marker:not(.visited) { opacity: 0.15; pointer-events: none; }
 
         /* DETAIL PANEL */
         .detail-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 400px; background: var(--panel); border-left: 1px solid rgba(212,168,75,0.15); transform: translateX(100%); transition: transform 0.32s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; z-index: 250; backdrop-filter: blur(10px); }
@@ -658,9 +660,9 @@
     </div>
 
     <div class="un-toggle">
-        <button class="un-btn active" id="btn193" onclick="setListMode('un')">193 UN</button>
-        <button class="un-btn" id="btn265" onclick="setListMode('unplus')">265 UN+</button>
-        <button class="un-btn" id="btn330" onclick="setListMode('tcc')">330 TCC</button>
+        <button class="un-btn active" id="btn193" onclick="toggleCategory('un')" title="Show/hide UN member countries">193 UN</button>
+        <button class="un-btn active" id="btn265" onclick="toggleCategory('unplus')" title="Show/hide UN+ extras">265 UN+</button>
+        <button class="un-btn active" id="btn330" onclick="toggleCategory('tcc')" title="Show/hide TCC extras">330 TCC</button>
     </div>
 
     <div class="auth-area" id="authArea">
@@ -781,21 +783,13 @@
 
         <div class="map-legend">
             <div class="legend-title">Map</div>
-            <div class="legend-row clickable" data-cat="un" onclick="toggleCategoryHide('un')" title="Click to hide/show UN entries">
-                <div class="legend-swatch" style="background: var(--tc)"></div> UN visited
+            <div class="legend-row clickable" data-vis="visited" onclick="toggleVisitFilter('visited')" title="Hide/show visited countries">
+                <div class="legend-swatch swatch-visited"></div> Visited
                 <span class="legend-cross">✕</span>
             </div>
-            <div class="legend-row clickable" data-cat="unplus" onclick="toggleCategoryHide('unplus')" title="Click to hide/show UN+ entries">
-                <div class="legend-swatch" style="background: var(--tl)"></div> UN+ visited
-                <span class="legend-cross">✕</span>
-            </div>
-            <div class="legend-row clickable" data-cat="tcc" onclick="toggleCategoryHide('tcc')" title="Click to hide/show TCC entries">
-                <div class="legend-swatch" style="background: var(--gd)"></div> TCC visited
-                <span class="legend-cross">✕</span>
-            </div>
-            <div class="legend-row clickable" data-cat="notvisited" onclick="toggleHighlightNotVisited()" title="Highlight unvisited countries in blue">
+            <div class="legend-row clickable" data-vis="notvisited" onclick="toggleVisitFilter('notvisited')" title="Hide/show unvisited countries">
                 <div class="legend-swatch swatch-notvisited"></div> Not yet visited
-                <span class="legend-highlight-ind">●</span>
+                <span class="legend-cross">✕</span>
             </div>
         </div>
 
@@ -928,10 +922,9 @@ let data = { countries: {} };
 let currentCountryIso3 = null;
 let projection = 'natural';
 let worldData = null;
-let listMode = 'un'; // 'un' | 'unplus' | 'tcc'
+let showCat = { un: true, unplus: true, tcc: true };  // which categories visible
+let showVisit = { visited: true, notvisited: true };  // which visit statuses visible
 let hideSmall = false; // when true, hide all small countries/territories (anything with a marker)
-let hideCat = { un: false, unplus: false, tcc: false }; // per-category visibility
-let highlightNotVisited = false; // when true, paint unvisited countries blue
 
 // ─── LOAD ─────────────────────────────────────────────
 async function loadData() {
@@ -1074,17 +1067,7 @@ function updateStats() {
     document.getElementById('continentCount').textContent = continents.size;
 }
 
-// ─── LIST MODE TOGGLE ─────────────────────────────────
-function setListMode(mode) {
-    listMode = mode;
-    document.getElementById('btn193').classList.toggle('active', mode === 'un');
-    document.getElementById('btn265').classList.toggle('active', mode === 'unplus');
-    document.getElementById('btn330').classList.toggle('active', mode === 'tcc');
-    renderSidebar();
-    updateStats();
-}
-
-// Helper: which entries are currently filtered in (based on mode + small-country filter + category filter)
+// Helper: which entries are currently filtered in
 function entryCategory(c) {
     if (c.inUN) return 'un';
     if (c.inUNPlus) return 'unplus';
@@ -1093,10 +1076,12 @@ function entryCategory(c) {
 
 function inActiveList(c) {
     if (hideSmall && customCoords[c.iso3]) return false;
-    if (hideCat[entryCategory(c)]) return false;
-    if (listMode === 'un') return c.inUN;
-    if (listMode === 'unplus') return c.inUNPlus;
-    return c.inTCC;
+    // Category filter
+    if (!showCat[entryCategory(c)]) return false;
+    // Visit-status filter
+    if (c.visited && !showVisit.visited) return false;
+    if (!c.visited && !showVisit.notvisited) return false;
+    return true;
 }
 
 // Toggle: hide small countries
@@ -1110,21 +1095,26 @@ function toggleHideSmall() {
     redrawMapColors();
 }
 
-// Toggle: hide a specific category
-function toggleCategoryHide(cat) {
-    hideCat[cat] = !hideCat[cat];
-    document.body.classList.toggle('hide-cat-' + cat, hideCat[cat]);
-    const row = document.querySelector('.legend-row[data-cat="' + cat + '"]');
-    if (row) row.classList.toggle('muted', hideCat[cat]);
+// Toggle: category visibility (top-bar buttons)
+function toggleCategory(cat) {
+    showCat[cat] = !showCat[cat];
+    const btnId = cat === 'un' ? 'btn193' : (cat === 'unplus' ? 'btn265' : 'btn330');
+    document.getElementById(btnId).classList.toggle('active', showCat[cat]);
+    document.body.classList.toggle('hide-cat-' + cat, !showCat[cat]);
     renderSidebar();
     updateStats();
     redrawMapColors();
 }
 
-// Toggle: highlight not-visited countries in blue (wishlist view)
-function toggleHighlightNotVisited() {
-    highlightNotVisited = !highlightNotVisited;
-    document.body.classList.toggle('highlight-notvisited', highlightNotVisited);
+// Toggle: visited / not visited filter (legend)
+function toggleVisitFilter(status) {
+    showVisit[status] = !showVisit[status];
+    document.body.classList.toggle('hide-' + status, !showVisit[status]);
+    const row = document.querySelector('.legend-row[data-vis="' + status + '"]');
+    if (row) row.classList.toggle('muted', !showVisit[status]);
+    renderSidebar();
+    updateStats();
+    redrawMapColors();
 }
 
 // ─── PANEL ─────────────────────────────────────────────
