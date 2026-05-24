@@ -9,8 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --tc: #C4622D; --tcl: #D4845A; --tcd: #9E4E24; --tcdeep: #6B2510;
-            --tl: #D88B30; --cr: #F5F0E8; --ch: #211F1C; --gd: #D4A84B;
+            --tc: #B85420; --tcl: #D67E3F; --tcd: #8E3F18; --tcdeep: #5A2A0F;  /* dark orange (UN) */
+            --tl: #ED9658; --cr: #F5F0E8; --ch: #211F1C; --gd: #D4A84B;        /* light orange (UN+), gold (TCC) */
             --gdl: #E8C870; --oc: #172B38; --lb: #404040;
             --bl: #4A90E2; --bld: #2E6EBA;  /* blue for "not yet visited" highlight */
             --panel: rgba(20, 18, 16, 0.97);
@@ -59,16 +59,16 @@
         .country-item { display: flex; align-items: center; gap: 6px; padding: 2px 4px 2px 8px; border-radius: 6px; font-size: 0.78rem; color: rgba(245, 240, 232, 0.5); transition: all 0.12s; }
         .country-item:hover { background: rgba(255,255,255,0.04); }
         .country-item.visited { color: rgba(245, 240, 232, 0.92); font-weight: 500; }
-        .country-item.visited:hover { background: rgba(196, 98, 45, 0.08); }
+        .country-item.visited:hover { background: rgba(184, 84, 32, 0.08); }
         .ci-clickable { display: flex; align-items: center; gap: 9px; flex: 1; cursor: pointer; min-width: 0; padding: 4px 0; }
         .ci-clickable:hover { color: var(--cr); }
         .ci-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .visit-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); }
-        .visit-dot.visited { background: var(--tc); border-color: var(--tcd); box-shadow: 0 0 6px rgba(196,98,45,0.4); }
+        .visit-dot.visited { background: var(--tc); border-color: var(--tcd); box-shadow: 0 0 6px rgba(184,84,32,0.4); }
         /* Category-tinted visited dots */
-        .cat-unplus .visit-dot.visited { background: var(--tl); border-color: #a06520; box-shadow: 0 0 6px rgba(216, 139, 48, 0.45); }
+        .cat-unplus .visit-dot.visited { background: var(--tl); border-color: #C97A3E; box-shadow: 0 0 6px rgba(237, 150, 88, 0.45); }
         .cat-tcc .visit-dot.visited { background: var(--gd); border-color: #a07c30; box-shadow: 0 0 6px rgba(212, 168, 75, 0.5); }
-        .un-tag { font-size: 0.55rem; padding: 1px 5px; background: rgba(216, 139, 48, 0.4); color: var(--tl); border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; flex-shrink: 0; }
+        .un-tag { font-size: 0.55rem; padding: 1px 5px; background: rgba(237, 150, 88, 0.4); color: var(--tl); border-radius: 3px; font-weight: 600; letter-spacing: 0.05em; flex-shrink: 0; }
         .un-tag.tcc-tag { background: rgba(212, 168, 75, 0.25); color: var(--gd); }
 
         /* SLIDING TOGGLE on each country row */
@@ -102,9 +102,9 @@
         .ci-toggle.on {
             background: var(--tc);
             border-color: var(--tcd);
-            box-shadow: 0 0 8px rgba(196,98,45,0.35);
+            box-shadow: 0 0 8px rgba(184,84,32,0.35);
         }
-        .cat-unplus .ci-toggle.on { background: var(--tl); border-color: #a06520; box-shadow: 0 0 8px rgba(216, 139, 48, 0.4); }
+        .cat-unplus .ci-toggle.on { background: var(--tl); border-color: #C97A3E; box-shadow: 0 0 8px rgba(237, 150, 88, 0.4); }
         .cat-tcc .ci-toggle.on { background: var(--gd); border-color: #a07c30; box-shadow: 0 0 8px rgba(212, 168, 75, 0.45); }
         .ci-toggle.on::after {
             left: 15px;
@@ -244,7 +244,7 @@
         .detail-body { padding: 20px 22px; }
 
         .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; margin-bottom: 16px; }
-        .badge-visited { background: rgba(196,98,45,0.2); color: var(--tcl); border: 1px solid rgba(196,98,45,0.35); }
+        .badge-visited { background: rgba(184,84,32,0.2); color: var(--tcl); border: 1px solid rgba(184,84,32,0.35); }
         .badge-not { background: rgba(255,255,255,0.06); color: rgba(245,240,232,0.5); border: 1px solid rgba(255,255,255,0.08); }
 
         .section-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(245,240,232,0.4); font-weight: 600; margin-bottom: 10px; }
@@ -255,8 +255,8 @@
         .btn-visited:hover { background: var(--tcd); }
         .btn-visited.active { box-shadow: 0 0 0 3px rgba(212,168,75,0.4); border-color: var(--gd); }
         /* Category-tinted action button */
-        .detail-panel.cat-unplus .btn-visited { background: var(--tl); border-color: #a06520; }
-        .detail-panel.cat-unplus .btn-visited:hover { background: #a06520; }
+        .detail-panel.cat-unplus .btn-visited { background: var(--tl); border-color: #C97A3E; }
+        .detail-panel.cat-unplus .btn-visited:hover { background: #C97A3E; }
         .detail-panel.cat-tcc .btn-visited { background: var(--gd); border-color: #a07c30; color: var(--ch); }
         .detail-panel.cat-tcc .btn-visited:hover { background: #a07c30; color: var(--cr); }
         .btn-not-visited { background: rgba(255,255,255,0.06); color: rgba(245,240,232,0.75); border-color: rgba(255,255,255,0.12); }
@@ -279,8 +279,8 @@
         .photo-cell img { width: 100%; height: 100%; object-fit: cover; }
         .photo-cell .photo-remove { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); color: var(--cr); border: none; border-radius: 50%; cursor: pointer; font-size: 0.7rem; display: none; align-items: center; justify-content: center; }
         .photo-cell:hover .photo-remove { display: flex; }
-        .photo-add { aspect-ratio: 1; border-radius: 6px; background: rgba(196,98,45,0.08); border: 1px dashed rgba(196,98,45,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(196,98,45,0.6); font-size: 0.75rem; cursor: pointer; transition: all 0.18s; gap: 4px; }
-        .photo-add:hover { background: rgba(196,98,45,0.15); color: var(--tc); border-color: var(--tc); }
+        .photo-add { aspect-ratio: 1; border-radius: 6px; background: rgba(184,84,32,0.08); border: 1px dashed rgba(184,84,32,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(184,84,32,0.6); font-size: 0.75rem; cursor: pointer; transition: all 0.18s; gap: 4px; }
+        .photo-add:hover { background: rgba(184,84,32,0.15); color: var(--tc); border-color: var(--tc); }
         .photo-add-icon { font-size: 1.4rem; }
         #photoInput { display: none; }
 
@@ -292,8 +292,8 @@
             gap: 10px;
             width: 100%;
             padding: 18px 16px;
-            background: linear-gradient(135deg, rgba(196,98,45,0.12), rgba(212,168,75,0.08));
-            border: 2px dashed rgba(196,98,45,0.4);
+            background: linear-gradient(135deg, rgba(184,84,32,0.12), rgba(212,168,75,0.08));
+            border: 2px dashed rgba(184,84,32,0.4);
             border-radius: 10px;
             color: var(--tcl);
             font-size: 0.9rem;
@@ -304,7 +304,7 @@
             margin-top: 8px;
         }
         .photo-upload-cta:hover {
-            background: linear-gradient(135deg, rgba(196,98,45,0.2), rgba(212,168,75,0.12));
+            background: linear-gradient(135deg, rgba(184,84,32,0.2), rgba(212,168,75,0.12));
             border-color: var(--tc);
             color: var(--cr);
             transform: translateY(-1px);
@@ -777,7 +777,7 @@
                 <button class="control-btn icon-btn" onclick="zoomReset()" title="Reset zoom">⌂</button>
             </div>
             <div class="control-group">
-                <button class="control-btn" id="smallToggleBtn" onclick="toggleHideSmall()" title="Hide small countries / territories">Hide small</button>
+                <button class="control-btn" id="smallToggleBtn" onclick="toggleHideSmall()" title="Hide small countries / territories">Hide small countries</button>
             </div>
         </div>
 
@@ -1088,7 +1088,7 @@ function inActiveList(c) {
 function toggleHideSmall() {
     hideSmall = !hideSmall;
     document.getElementById('smallToggleBtn').classList.toggle('active', hideSmall);
-    document.getElementById('smallToggleBtn').textContent = hideSmall ? 'Show all' : 'Hide small';
+    document.getElementById('smallToggleBtn').textContent = hideSmall ? 'Show all countries' : 'Hide small countries';
     document.body.classList.toggle('hide-markers', hideSmall);
     renderSidebar();
     updateStats();
