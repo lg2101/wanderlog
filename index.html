@@ -112,6 +112,7 @@
 
         /* MARKERS — circular flag badges */
         .marker { cursor: pointer; transition: transform 0.15s; }
+        body.hide-markers .marker { display: none; }
         .marker-bg {
             fill: rgba(33, 31, 28, 0.9);
             stroke: rgba(232, 200, 112, 0.6);
@@ -723,6 +724,9 @@
                 <button class="control-btn icon-btn" onclick="zoomOut()" title="Zoom out">−</button>
                 <button class="control-btn icon-btn" onclick="zoomReset()" title="Reset zoom">⌂</button>
             </div>
+            <div class="control-group">
+                <button class="control-btn" id="smallToggleBtn" onclick="toggleHideSmall()" title="Hide small countries / territories">Hide small</button>
+            </div>
         </div>
 
         <div class="map-legend">
@@ -862,6 +866,7 @@ let currentCountryIso3 = null;
 let projection = 'natural';
 let worldData = null;
 let listMode = 'un'; // 'un' | 'unplus' | 'tcc'
+let hideSmall = false; // when true, hide all small countries/territories (anything with a marker)
 
 // ─── LOAD ─────────────────────────────────────────────
 async function loadData() {
@@ -1012,11 +1017,23 @@ function setListMode(mode) {
     updateStats();
 }
 
-// Helper: which entries are currently filtered in (based on mode)
+// Helper: which entries are currently filtered in (based on mode + small-country filter)
 function inActiveList(c) {
+    if (hideSmall && customCoords[c.iso3]) return false;  // hide marker-only entries
     if (listMode === 'un') return c.inUN;
     if (listMode === 'unplus') return c.inUNPlus;
     return c.inTCC;
+}
+
+// Toggle: hide small countries (markers + sidebar list entries)
+function toggleHideSmall() {
+    hideSmall = !hideSmall;
+    document.getElementById('smallToggleBtn').classList.toggle('active', hideSmall);
+    document.getElementById('smallToggleBtn').textContent = hideSmall ? 'Show all' : 'Hide small';
+    document.body.classList.toggle('hide-markers', hideSmall);
+    renderSidebar();
+    updateStats();
+    redrawMapColors();
 }
 
 // ─── PANEL ─────────────────────────────────────────────
