@@ -12,6 +12,7 @@
             --tc: #C4622D; --tcl: #D4845A; --tcd: #9E4E24; --tcdeep: #6B2510;
             --tl: #D88B30; --cr: #F5F0E8; --ch: #211F1C; --gd: #D4A84B;
             --gdl: #E8C870; --oc: #172B38; --lb: #404040;
+            --bl: #4A90E2; --bld: #2E6EBA;  /* blue for "not yet visited" highlight */
             --panel: rgba(20, 18, 16, 0.97);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -203,6 +204,25 @@
         .legend-row.muted { opacity: 0.4; }
         .legend-row.muted .legend-swatch { filter: grayscale(1); }
         .legend-row.muted .legend-cross { opacity: 1; color: var(--tcl); }
+
+        /* "Not yet visited" row indicator */
+        .swatch-notvisited { background: var(--lb); width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; transition: background 0.2s; }
+        body.highlight-notvisited .swatch-notvisited { background: var(--bl); box-shadow: 0 0 0 1px rgba(74,144,226,0.4); }
+        .legend-highlight-ind { margin-left: auto; opacity: 0; transition: opacity 0.15s; color: var(--bl); font-size: 0.6rem; }
+        body.highlight-notvisited .legend-row[data-cat="notvisited"] .legend-highlight-ind { opacity: 1; }
+
+        /* Highlight not-visited elements in blue across map + sidebar */
+        body.highlight-notvisited .country-path:not(.visited) { fill: var(--bl); }
+        body.highlight-notvisited .country-path:not(.visited):hover { fill: #6BA6E8 !important; }
+        body.highlight-notvisited .marker:not(.visited) .marker-bg {
+            stroke: var(--bl);
+            stroke-width: 2.5;
+        }
+        body.highlight-notvisited .visit-dot:not(.visited) {
+            background: var(--bl);
+            border-color: var(--bld);
+            box-shadow: 0 0 5px rgba(74,144,226,0.3);
+        }
 
         /* DETAIL PANEL */
         .detail-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 400px; background: var(--panel); border-left: 1px solid rgba(212,168,75,0.15); transform: translateX(100%); transition: transform 0.32s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; z-index: 250; backdrop-filter: blur(10px); }
@@ -773,7 +793,10 @@
                 <div class="legend-swatch" style="background: var(--gd)"></div> TCC visited
                 <span class="legend-cross">✕</span>
             </div>
-            <div class="legend-row"><div class="legend-swatch" style="background: var(--lb)"></div> Not yet visited</div>
+            <div class="legend-row clickable" data-cat="notvisited" onclick="toggleHighlightNotVisited()" title="Highlight unvisited countries in blue">
+                <div class="legend-swatch swatch-notvisited"></div> Not yet visited
+                <span class="legend-highlight-ind">●</span>
+            </div>
         </div>
 
         <div id="tooltip"></div>
@@ -908,6 +931,7 @@ let worldData = null;
 let listMode = 'un'; // 'un' | 'unplus' | 'tcc'
 let hideSmall = false; // when true, hide all small countries/territories (anything with a marker)
 let hideCat = { un: false, unplus: false, tcc: false }; // per-category visibility
+let highlightNotVisited = false; // when true, paint unvisited countries blue
 
 // ─── LOAD ─────────────────────────────────────────────
 async function loadData() {
@@ -1095,6 +1119,12 @@ function toggleCategoryHide(cat) {
     renderSidebar();
     updateStats();
     redrawMapColors();
+}
+
+// Toggle: highlight not-visited countries in blue (wishlist view)
+function toggleHighlightNotVisited() {
+    highlightNotVisited = !highlightNotVisited;
+    document.body.classList.toggle('highlight-notvisited', highlightNotVisited);
 }
 
 // ─── PANEL ─────────────────────────────────────────────
