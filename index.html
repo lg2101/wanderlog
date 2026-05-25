@@ -771,7 +771,7 @@
                 <input type="text" id="shareUrl" readonly>
                 <button id="copyBtn" onclick="copyShareUrl()">Copy</button>
             </div>
-            <p class="share-hint">Anyone with this link can view your visited countries, years, and notes — but they can't edit anything. Photos stored locally in your browser won't appear in shared view.</p>
+            <p class="share-hint">Anyone with this link can view your visited countries, years, notes, and photos — but they can't edit anything.</p>
         </div>
 
         <div id="shareErr" class="auth-error" style="display:none"></div>
@@ -874,7 +874,7 @@
                         <span class="photo-upload-icon">📁</span>
                         <span>Upload photos from your device</span>
                     </button>
-                    <div class="photo-upload-hint">Up to 25 photos · JPG, PNG, HEIC · Stored locally in your browser</div>
+                    <div class="photo-upload-hint">Up to 25 photos · JPG, PNG, HEIC · Stored in the cloud · Visible in shared profile</div>
                     <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotoUpload(event)">
                 </div>
             </div>
@@ -956,6 +956,9 @@ try {
 </script>
 
 <script>
+const CLOUDINARY_CLOUD = 'dg7hj1csb';
+const CLOUDINARY_PRESET = 'wanderlog_unsigned';
+
 let data = { countries: {} };
 let currentCountryIso3 = null;
 let projection = 'natural';
@@ -977,9 +980,11 @@ async function loadData() {
             c.visited = visStored !== null ? JSON.parse(visStored) : (c.visited || false);
             c.year = yrStored !== null ? parseInt(yrStored) : c.year;
             c.notes = notesStored !== null ? notesStored : (c.notes || '');
-            // Photos from localStorage (base64)
+            // Legacy photos from localStorage (base64) — kept as read-only fallback
             const photosStored = localStorage.getItem('p_' + c.iso3);
             c.localPhotos = photosStored ? JSON.parse(photosStored) : [];
+            // Cloud photos (Cloudinary URLs) — loaded from Firestore on sign-in
+            c.cloudPhotos = [];
             data.countries[c.iso3] = c;
         });
         renderSidebar();
@@ -1265,24 +1270,26 @@ function renderPhotos() {
     const country = data.countries[currentCountryIso3];
     const grid = document.getElementById('photoGrid');
     const uploadCta = document.getElementById('photoUploadCta');
-    const repoPhotos = (country.photos || []).map(name => ({type: 'repo', src: 'photos/' + country.iso3 + '/' + name, name: name}));
-    const localPhotos = (country.localPhotos || []).map((p, i) => ({type: 'local', src: p, index: i}));
-    const allPhotos = repoPhotos.concat(localPhotos);
+    const repoPhotos   = (country.photos      || []).map(name  => ({type: 'repo',  src: 'photos/' + country.iso3 + '/' + name, name: name}));
+    const cloudPhotos  = (country.cloudPhotos  || []).map((url, i) => ({type: 'cloud', src: url, index: i}));
+    const localPhotos  = (country.localPhotos  || []).map((p,   i) => ({type: 'local', src: p,   index: i}));
+    const allPhotos = repoPhotos.concat(cloudPhotos).concat(localPhotos);
 
     document.getElementById('photoCount').textContent = allPhotos.length + ' / 25';
 
     if (allPhotos.length === 0) {
-        // No photos yet — show prominent upload CTA, hide grid
         grid.innerHTML = '';
         grid.style.display = 'none';
         uploadCta.style.display = 'flex';
     } else {
-        // Photos exist — show grid with + tile
         grid.style.display = 'grid';
         uploadCta.style.display = 'none';
         let html = '';
-        allPhotos.forEach((p, i) => {
-            const removeBtn = p.type === 'local' ? '<button class="photo-remove" onclick="event.stopPropagation();removePhoto(' + p.index + ')">✕</button>' : '';
+        allPhotos.forEach((p) => {
+            const canRemove = p.type === 'cloud' || p.type === 'local';
+            const removeBtn = canRemove
+                ? '<button class="photo-remove" onclick="event.stopPropagation();removePhoto(\'' + p.type + '\',' + p.index + ')">✕</button>'
+                : '';
             html += '<div class="photo-cell" onclick="openLightbox(\'' + p.src.replace(/'/g, "\\'") + '\')"><img src="' + p.src + '" onerror="this.parentElement.style.display=\'none\'">' + removeBtn + '</div>';
         });
         if (allPhotos.length < 25) {
@@ -1292,52 +1299,86 @@ function renderPhotos() {
     }
 }
 
-function handlePhotoUpload(event) {
+async function handlePhotoUpload(event) {
     if (!currentCountryIso3) return;
     const files = event.target.files;
     if (!files.length) return;
+    if (!currentUser) {
+        alert('Please sign in first — photos are stored in your cloud account.');
+        event.target.value = '';
+        return;
+    }
     const country = data.countries[currentCountryIso3];
-    if (!country.localPhotos) country.localPhotos = [];
+    if (!country.cloudPhotos) country.cloudPhotos = [];
 
-    Array.from(files).forEach(file => {
-        if (country.localPhotos.length >= 25 - (country.photos || []).length) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            // Compress image
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const maxW = 1200;
-                const scale = Math.min(1, maxW / img.width);
-                canvas.width = img.width * scale;
-                canvas.height = img.height * scale;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-                country.localPhotos.push(dataUrl);
-                try {
-                    localStorage.setItem('p_' + currentCountryIso3, JSON.stringify(country.localPhotos));
-                } catch (err) {
-                    alert('Storage full. Remove some photos first.');
-                    country.localPhotos.pop();
-                }
-                renderPhotos();
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
+    const currentCount = (country.photos || []).length + (country.cloudPhotos || []).length + (country.localPhotos || []).length;
+    const remaining = 25 - currentCount;
+    if (remaining <= 0) {
+        alert('Photo limit reached (25 per country).');
+        event.target.value = '';
+        return;
+    }
+
+    const filesToUpload = Array.from(files).slice(0, remaining);
+    showSaveIndicator('⏳ Uploading ' + filesToUpload.length + ' photo' + (filesToUpload.length > 1 ? 's' : '') + '…');
+
+    const targetIso3 = currentCountryIso3;
+    let succeeded = 0;
+    for (const file of filesToUpload) {
+        try {
+            const url = await uploadToCloudinary(file);
+            country.cloudPhotos.push(url);
+            succeeded++;
+            // Re-render after each upload so user sees progress
+            if (currentCountryIso3 === targetIso3) renderPhotos();
+        } catch (err) {
+            console.error('Cloudinary upload failed:', err);
+            alert('One or more photos failed to upload: ' + (err.message || err));
+        }
+    }
+
+    if (succeeded > 0) {
+        scheduleCloudSave();
+        showSaveIndicator('✓ ' + succeeded + ' photo' + (succeeded > 1 ? 's' : '') + ' uploaded');
+    }
     event.target.value = '';
 }
 
-function removePhoto(index) {
+async function uploadToCloudinary(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+    formData.append('folder', 'wanderlog');
+
+    const res = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', {
+        method: 'POST',
+        body: formData
+    });
+    if (!res.ok) {
+        const txt = await res.text();
+        throw new Error('Upload failed (' + res.status + '): ' + txt);
+    }
+    const result = await res.json();
+    if (!result.secure_url) throw new Error('No URL returned from Cloudinary');
+    return result.secure_url;
+}
+
+function removePhoto(type, index) {
     if (!currentCountryIso3) return;
     const country = data.countries[currentCountryIso3];
-    country.localPhotos.splice(index, 1);
-    if (country.localPhotos.length > 0) {
-        localStorage.setItem('p_' + currentCountryIso3, JSON.stringify(country.localPhotos));
-    } else {
-        localStorage.removeItem('p_' + currentCountryIso3);
+    if (type === 'cloud') {
+        if (!country.cloudPhotos) return;
+        country.cloudPhotos.splice(index, 1);
+        scheduleCloudSave();
+    } else if (type === 'local') {
+        // Legacy localStorage-backed photo
+        if (!country.localPhotos) return;
+        country.localPhotos.splice(index, 1);
+        if (country.localPhotos.length > 0) {
+            localStorage.setItem('p_' + currentCountryIso3, JSON.stringify(country.localPhotos));
+        } else {
+            localStorage.removeItem('p_' + currentCountryIso3);
+        }
     }
     renderPhotos();
 }
@@ -2141,10 +2182,12 @@ async function tryLoadPublicProfile(uid) {
                 c.visited = !!ent.visited;
                 c.year = ent.year || null;
                 c.notes = ent.notes || '';
+                c.cloudPhotos = Array.isArray(ent.photos) ? ent.photos : [];
             } else {
                 c.visited = false;
                 c.year = null;
                 c.notes = '';
+                c.cloudPhotos = [];
             }
             // Don't show local-storage photos when viewing someone else (those are device-local)
             c.localPhotos = [];
@@ -2173,10 +2216,12 @@ async function mergeCloudData() {
                     c.visited = !!cloudEntry.visited;
                     c.year = cloudEntry.year || null;
                     c.notes = cloudEntry.notes || '';
+                    c.cloudPhotos = Array.isArray(cloudEntry.photos) ? cloudEntry.photos : [];
                 } else {
                     c.visited = false;
                     c.year = null;
                     c.notes = '';
+                    c.cloudPhotos = [];
                 }
             });
         } else {
@@ -2193,11 +2238,13 @@ async function mergeCloudData() {
 function buildCountryPayload() {
     const out = {};
     Object.values(data.countries).forEach(c => {
-        if (c.visited || c.year || (c.notes && c.notes.length > 0)) {
+        const hasPhotos = c.cloudPhotos && c.cloudPhotos.length > 0;
+        if (c.visited || c.year || (c.notes && c.notes.length > 0) || hasPhotos) {
             out[c.iso3] = {
                 visited: !!c.visited,
                 year: c.year || null,
-                notes: c.notes || ''
+                notes: c.notes || '',
+                photos: c.cloudPhotos || []
             };
         }
     });
