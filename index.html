@@ -734,18 +734,135 @@
         }
         .save-indicator.show { opacity: 1; transform: translateY(0); }
 
+        /* ─── HAMBURGER & MOBILE DRAWER ─── */
+        .menu-btn {
+            display: none;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--cr);
+            width: 38px; height: 38px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.18s;
+        }
+        .menu-btn:hover, .menu-btn:active { background: rgba(255,255,255,0.12); }
+        .sidebar-backdrop {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 195;
+            backdrop-filter: blur(2px);
+        }
+        .sidebar-backdrop.open { display: block; }
+
         @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .detail-panel { width: 100%; }
-            header { padding: 0 14px; }
-            .header-stats { gap: 12px; }
+            header {
+                padding: 0 12px;
+                height: 54px;
+                gap: 10px;
+            }
+            .logo { font-size: 1.2rem; }
+            .menu-btn { display: inline-flex; }
+
+            /* Compact stats: horizontal scroll, smaller text */
+            .header-stats {
+                gap: 10px;
+                overflow-x: auto;
+                flex-shrink: 1;
+                min-width: 0;
+                scrollbar-width: none;
+            }
+            .header-stats::-webkit-scrollbar { display: none; }
+            .stat-number { font-size: 1.1rem; }
+            .stat-label { font-size: 0.5rem; letter-spacing: 0.08em; }
+            .stat-divider { height: 18px; }
+
+            /* Hide category toggle (use legend/sidebar instead) */
             .un-toggle { display: none; }
+
+            /* Hide sign-in text in chip / shrink auth button */
+            .signin-btn { padding: 6px 10px; font-size: 0.7rem; }
+
+            /* Sidebar becomes a drawer that slides in */
+            .sidebar {
+                display: block;
+                position: fixed;
+                top: 54px; bottom: 0; left: 0;
+                width: 280px;
+                z-index: 200;
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .main-layout { display: block; height: calc(100vh - 54px); }
+            .map-container { width: 100%; height: 100%; }
+
+            /* Detail panel: full screen with smaller hero */
+            .detail-panel {
+                width: 100%;
+                top: 54px;
+            }
+            .detail-hero { height: 140px; }
+            .hero-name { font-size: 1.4rem; }
+            .hero-flag img { width: 52px; height: 40px; }
+            .detail-body { padding: 16px 16px; }
+
+            /* Map controls: more compact in top-right */
+            .map-controls { top: 12px; right: 12px; gap: 6px; }
+            .control-btn { padding: 7px 10px; font-size: 0.7rem; min-width: 36px; }
+
+            /* Region shortcuts: smaller, allow wrap */
+            .region-shortcuts {
+                top: auto;
+                bottom: 110px;
+                left: 50%;
+                font-size: 0.65rem;
+                padding: 4px;
+                max-width: calc(100vw - 24px);
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+            .region-shortcuts::-webkit-scrollbar { display: none; }
+            .region-btn { padding: 4px 10px; font-size: 0.65rem; }
+
+            /* Legend: smaller, stays bottom-left */
+            .map-legend { bottom: 12px; left: 12px; padding: 9px 12px; font-size: 0.7rem; }
+            .legend-title { font-size: 0.5rem; margin-bottom: 6px; }
+            .legend-row { font-size: 0.66rem; gap: 6px; margin-bottom: 3px; }
+            .legend-swatch { width: 10px; height: 10px; }
+
+            /* Lightbox: less padding, bigger nav buttons */
+            .lightbox { padding: 30px 12px; }
+            .lightbox img { max-width: calc(100vw - 24px); max-height: calc(100vh - 60px); }
+            .lightbox-nav { width: 44px; height: 44px; font-size: 1.3rem; }
+            .lightbox-prev { left: 8px; }
+            .lightbox-next { right: 8px; }
+            .lightbox-close { width: 38px; height: 38px; top: 12px; right: 12px; }
+
+            /* Auth modal & share modal: fit narrow screens */
+            .auth-modal-inner, .share-modal-inner { max-width: 92vw; padding: 22px 20px; }
+
+            /* Save indicator: lower so it doesn't overlap header */
+            .save-indicator { top: auto; bottom: 76px; right: 12px; font-size: 0.7rem; }
+        }
+
+        @media (max-width: 480px) {
+            /* Show only the most relevant stat (UN) to save space */
+            .stat-item:nth-child(n+3) { display: none; }
+            .stat-divider:nth-child(n+3) { display: none; }
         }
     </style>
 </head>
 <body>
 
 <header>
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">☰</button>
     <div class="logo">wander<em>log</em></div>
 
     <div class="header-stats">
@@ -863,8 +980,10 @@
     <button class="viewing-exit" onclick="exitViewMode()">Back to my profile</button>
 </div>
 
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
 <div class="main-layout">
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">Countries by Continent</div>
         <div id="continentsList"></div>
     </div>
@@ -1251,6 +1370,16 @@ function toggleContinent(el) {
     el.nextElementSibling.classList.toggle('open');
 }
 
+// ─── MOBILE DRAWER ─────────────────────────────────────
+function toggleSidebar() {
+    const open = document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarBackdrop').classList.toggle('open', open);
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarBackdrop').classList.remove('open');
+}
+
 // ─── STATS ─────────────────────────────────────────────
 function updateStats() {
     const all = Object.values(data.countries);
@@ -1399,6 +1528,8 @@ function openPanel(iso3) {
 
     renderPhotos();
     document.getElementById('detailPanel').classList.add('open');
+    // On mobile, auto-close the sidebar drawer when a country is opened
+    if (window.innerWidth <= 768) closeSidebar();
 }
 
 function closePanel() {
