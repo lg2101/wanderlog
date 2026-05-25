@@ -989,7 +989,8 @@ try {
         getFirestore,
         doc,
         getDoc,
-        setDoc
+        setDoc,
+        updateDoc
     } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
 
     const firebaseConfig = {
@@ -1027,7 +1028,18 @@ try {
         },
         saveCloud: async (uid, payload) => {
             const ref = doc(db, 'users', uid);
-            await setDoc(ref, payload, { merge: true });
+            // Use updateDoc so map fields like `countries` get fully replaced,
+            // not deep-merged. This ensures unmarked countries actually get removed
+            // from Firestore. Fall back to setDoc when the document doesn't exist yet.
+            try {
+                await updateDoc(ref, payload);
+            } catch (err) {
+                if (err.code === 'not-found' || (err.message && err.message.includes('No document'))) {
+                    await setDoc(ref, payload);
+                } else {
+                    throw err;
+                }
+            }
         }
     };
 
