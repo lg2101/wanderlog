@@ -275,7 +275,9 @@
         .hero-gradient { position: absolute; inset: 0; background: linear-gradient(to top, rgba(18,16,14,0.92) 0%, transparent 70%); }
         .hero-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 22px; z-index: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
         .hero-text { flex: 1; min-width: 0; }
-        .hero-flag { font-size: 2.6rem; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); line-height: 1; align-self: center; }
+        .hero-flag { flex-shrink: 0; align-self: center; }
+        .hero-flag img { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.18); display: block; }
+        .hero-flag .hero-flag-emoji { font-size: 2.6rem; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
         .hero-name { font-family: 'Fraunces', serif; font-size: 1.7rem; font-weight: 700; color: var(--cr); line-height: 1.1; word-wrap: break-word; }
         .hero-continent { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(245,240,232,0.55); margin-top: 4px; font-weight: 500; }
         .detail-close { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: var(--cr); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 0.9rem; z-index: 3; display: flex; align-items: center; justify-content: center; }
@@ -325,8 +327,17 @@
             border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;
             margin-bottom: 12px;
         }
-        .info-row-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,240,232,0.45); font-weight: 600; }
+        .info-row-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,240,232,0.45); font-weight: 600; margin-bottom: 3px; }
         .info-row-value { font-family: 'Fraunces', serif; font-size: 1rem; font-style: italic; color: var(--cr); font-weight: 500; }
+        .capital-mark { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 2px 0; }
+        .capital-mark-status { font-size: 0.7rem; color: rgba(245,240,232,0.5); font-weight: 500; }
+        .info-row.on .capital-mark-status { color: var(--tcl); }
+        .detail-panel.cat-unplus .info-row.on .capital-mark-status { color: var(--tl); }
+        .detail-panel.cat-tcc .info-row.on .capital-mark-status { color: var(--gd); }
+        /* smaller variant of the big toggle for inline use */
+        .big-toggle.small-toggle { width: 40px; height: 22px; border-radius: 13px; }
+        .big-toggle.small-toggle::after { width: 16px; height: 16px; top: 2px; left: 2px; }
+        .big-toggle.small-toggle.on::after { left: 20px; }
 
         .form-row { margin-bottom: 16px; }
         .form-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,240,232,0.4); font-weight: 600; margin-bottom: 6px; display: block; }
@@ -339,8 +350,12 @@
         .photo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .photo-count { font-size: 0.7rem; color: rgba(245,240,232,0.5); }
         .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .photo-cell { aspect-ratio: 1; border-radius: 6px; overflow: hidden; cursor: pointer; position: relative; transition: transform 0.18s; background: rgba(255,255,255,0.04); }
+        .photo-cell { aspect-ratio: 1; border-radius: 6px; overflow: hidden; cursor: grab; position: relative; transition: transform 0.18s, opacity 0.18s; background: rgba(255,255,255,0.04); }
         .photo-cell:hover { transform: scale(1.03); z-index: 2; }
+        .photo-cell.dragging { opacity: 0.3; cursor: grabbing; transform: scale(0.95); }
+        .photo-cell.drag-over { box-shadow: 0 0 0 3px var(--tcl); transform: scale(1.05); }
+        .photo-drag-handle { position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; background: rgba(0,0,0,0.55); border-radius: 4px; display: none; align-items: center; justify-content: center; color: var(--cr); font-size: 0.75rem; pointer-events: none; }
+        .photo-cell:hover .photo-drag-handle { display: flex; }
         .photo-cell img { width: 100%; height: 100%; object-fit: cover; }
         .photo-cell .photo-remove { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); color: var(--cr); border: none; border-radius: 50%; cursor: pointer; font-size: 0.7rem; display: none; align-items: center; justify-content: center; }
         .photo-cell:hover .photo-remove { display: flex; }
@@ -908,9 +923,15 @@
                     </div>
                 </div>
 
-                <div class="info-row">
-                    <span class="info-row-label">Capital</span>
-                    <span class="info-row-value" id="capitalValue">—</span>
+                <div class="info-row" id="capitalRow">
+                    <div>
+                        <div class="info-row-label">Capital</div>
+                        <div class="info-row-value" id="capitalValue">—</div>
+                    </div>
+                    <div class="capital-mark" id="capitalMarkWrap" onclick="toggleCapitalVisited()">
+                        <span class="capital-mark-status" id="capitalMarkStatus">Not yet</span>
+                        <button class="big-toggle small-toggle" id="capitalToggle" type="button" aria-label="Toggle capital visited"></button>
+                    </div>
                 </div>
 
                 <div class="form-row">
@@ -1107,6 +1128,9 @@ async function loadData() {
             c.localPhotos = photosStored ? JSON.parse(photosStored) : [];
             // Cloud photos (Cloudinary URLs) — loaded from Firestore on sign-in
             c.cloudPhotos = [];
+            // Capital visited flag
+            const capStored = localStorage.getItem('cv_' + c.iso3);
+            c.capitalVisited = capStored === 'true';
             data.countries[c.iso3] = c;
         });
         renderSidebar();
@@ -1288,7 +1312,7 @@ function openPanel(iso3) {
     if (!country) return;
     currentCountryIso3 = iso3;
 
-    document.getElementById('heroFlag').textContent = getFlagEmoji(country.iso2);
+    renderHeroFlag(country);
     document.getElementById('heroName').textContent = country.name;
     // Category label below country name
     let catLabel = country.continent;
@@ -1325,7 +1349,18 @@ function openPanel(iso3) {
     }
 
     document.getElementById('yearInput').value = country.year || '';
-    document.getElementById('capitalValue').textContent = CAPITALS[country.iso3] || '—';
+    const capName = CAPITALS[country.iso3] || '—';
+    document.getElementById('capitalValue').textContent = capName;
+    // Capital marking toggle
+    const hasCapital = capName !== '—';
+    const capRow = document.getElementById('capitalRow');
+    const capToggle = document.getElementById('capitalToggle');
+    const capMarkWrap = document.getElementById('capitalMarkWrap');
+    const capStatus = document.getElementById('capitalMarkStatus');
+    capMarkWrap.style.display = hasCapital ? 'flex' : 'none';
+    capToggle.classList.toggle('on', !!country.capitalVisited);
+    capRow.classList.toggle('on', !!country.capitalVisited);
+    capStatus.textContent = country.capitalVisited ? '✓ Been there' : 'Not yet';
 
     renderPhotos();
     document.getElementById('detailPanel').classList.add('open');
@@ -1375,6 +1410,18 @@ function updateYear() {
     else localStorage.removeItem('y_' + currentCountryIso3);
 }
 
+function toggleCapitalVisited() {
+    if (!currentCountryIso3) return;
+    const country = data.countries[currentCountryIso3];
+    country.capitalVisited = !country.capitalVisited;
+    localStorage.setItem('cv_' + currentCountryIso3, country.capitalVisited ? 'true' : 'false');
+    // Update UI inline
+    document.getElementById('capitalToggle').classList.toggle('on', country.capitalVisited);
+    document.getElementById('capitalRow').classList.toggle('on', country.capitalVisited);
+    document.getElementById('capitalMarkStatus').textContent = country.capitalVisited ? '✓ Been there' : 'Not yet';
+    if (typeof scheduleCloudSave === 'function') scheduleCloudSave();
+}
+
 function refreshAll() {
     renderSidebar();
     updateStats();
@@ -1408,13 +1455,56 @@ function renderPhotos() {
             const removeBtn = canRemove
                 ? '<button class="photo-remove" onclick="event.stopPropagation();removePhoto(\'' + p.type + '\',' + p.index + ')">✕</button>'
                 : '';
-            html += '<div class="photo-cell" onclick="openLightbox(\'' + p.src.replace(/'/g, "\\'") + '\')"><img src="' + p.src + '" onerror="this.parentElement.style.display=\'none\'">' + removeBtn + '</div>';
+            const draggable = p.type === 'cloud' ? ' draggable="true" data-cloud-idx="' + p.index + '"' : '';
+            const handle = p.type === 'cloud' ? '<div class="photo-drag-handle" title="Drag to reorder">⋮⋮</div>' : '';
+            html += '<div class="photo-cell"' + draggable + ' onclick="openLightbox(\'' + p.src.replace(/'/g, "\\'") + '\')"><img src="' + p.src + '" onerror="this.parentElement.style.display=\'none\'">' + handle + removeBtn + '</div>';
         });
         if (allPhotos.length < 25) {
             html += '<div class="photo-add" onclick="document.getElementById(\'photoInput\').click()"><span class="photo-add-icon">+</span><span>Add</span></div>';
         }
         grid.innerHTML = html;
+        wirePhotoDragDrop();
     }
+}
+
+let _dragSrcIdx = null;
+function wirePhotoDragDrop() {
+    document.querySelectorAll('.photo-cell[draggable="true"]').forEach(cell => {
+        cell.addEventListener('dragstart', (e) => {
+            _dragSrcIdx = parseInt(cell.dataset.cloudIdx, 10);
+            cell.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(_dragSrcIdx));
+        });
+        cell.addEventListener('dragend', () => {
+            cell.classList.remove('dragging');
+            document.querySelectorAll('.photo-cell.drag-over').forEach(c => c.classList.remove('drag-over'));
+        });
+        cell.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            cell.classList.add('drag-over');
+        });
+        cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+        cell.addEventListener('drop', (e) => {
+            e.preventDefault();
+            cell.classList.remove('drag-over');
+            const targetIdx = parseInt(cell.dataset.cloudIdx, 10);
+            if (isNaN(_dragSrcIdx) || isNaN(targetIdx) || _dragSrcIdx === targetIdx) return;
+            reorderPhoto(_dragSrcIdx, targetIdx);
+            _dragSrcIdx = null;
+        });
+    });
+}
+
+function reorderPhoto(fromIdx, toIdx) {
+    if (!currentCountryIso3) return;
+    const arr = data.countries[currentCountryIso3].cloudPhotos;
+    if (!arr || fromIdx < 0 || fromIdx >= arr.length || toIdx < 0 || toIdx >= arr.length) return;
+    const [moved] = arr.splice(fromIdx, 1);
+    arr.splice(toIdx, 0, moved);
+    renderPhotos();
+    scheduleCloudSave();
 }
 
 async function handlePhotoUpload(event) {
@@ -2056,6 +2146,24 @@ function getFlagEmoji(iso2) {
     return String.fromCodePoint(...[...iso2.toUpperCase()].map(x => 127397 + x.charCodeAt()));
 }
 
+// Subdivisions / non-ISO2 codes mapped to flagcdn subdivision codes (where flagcdn has them)
+const FLAG_OVERRIDES = {
+    ENG: 'gb-eng', SCO: 'gb-sct', WLS: 'gb-wls', NIR: 'gb-nir'
+};
+
+function renderHeroFlag(country) {
+    const el = document.getElementById('heroFlag');
+    const override = FLAG_OVERRIDES[country.iso3];
+    const code = override || (country.iso2 && country.iso2 !== '--' ? country.iso2.toLowerCase() : null);
+    if (code) {
+        const emoji = getFlagEmoji(country.iso2);
+        el.innerHTML = '<img src="https://flagcdn.com/h120/' + code + '.png" alt="' + country.name + ' flag" '
+            + 'onerror="this.parentElement.innerHTML=\'<span class=&quot;hero-flag-emoji&quot;>' + emoji + '</span>\'">';
+    } else {
+        el.innerHTML = '<span class="hero-flag-emoji">' + getFlagEmoji(country.iso2) + '</span>';
+    }
+}
+
 function setProjection(p, ev) {
     projection = p;
     document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
@@ -2344,11 +2452,13 @@ async function tryLoadPublicProfile(uid) {
             const ent = cloudCountries[c.iso3];
             if (ent) {
                 c.visited = !!ent.visited;
+                c.capitalVisited = !!ent.capitalVisited;
                 c.year = ent.year || null;
                 c.notes = ent.notes || '';
                 c.cloudPhotos = Array.isArray(ent.photos) ? ent.photos : [];
             } else {
                 c.visited = false;
+                c.capitalVisited = false;
                 c.year = null;
                 c.notes = '';
                 c.cloudPhotos = [];
@@ -2378,11 +2488,13 @@ async function mergeCloudData() {
                 const cloudEntry = cloud.countries[c.iso3];
                 if (cloudEntry) {
                     c.visited = !!cloudEntry.visited;
+                    c.capitalVisited = !!cloudEntry.capitalVisited;
                     c.year = cloudEntry.year || null;
                     c.notes = cloudEntry.notes || '';
                     c.cloudPhotos = Array.isArray(cloudEntry.photos) ? cloudEntry.photos : [];
                 } else {
                     c.visited = false;
+                    c.capitalVisited = false;
                     c.year = null;
                     c.notes = '';
                     c.cloudPhotos = [];
@@ -2403,9 +2515,10 @@ function buildCountryPayload() {
     const out = {};
     Object.values(data.countries).forEach(c => {
         const hasPhotos = c.cloudPhotos && c.cloudPhotos.length > 0;
-        if (c.visited || c.year || hasPhotos) {
+        if (c.visited || c.capitalVisited || c.year || hasPhotos) {
             out[c.iso3] = {
                 visited: !!c.visited,
+                capitalVisited: !!c.capitalVisited,
                 year: c.year || null,
                 photos: c.cloudPhotos || []
             };
