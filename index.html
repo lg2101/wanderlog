@@ -2525,6 +2525,15 @@ async function mergeCloudData() {
                     c.notes = '';
                     c.cloudPhotos = [];
                 }
+                // Mirror cloud state into localStorage so stale local entries
+                // don't re-pollute the state on the next reload before the
+                // cloud sync completes.
+                if (c.visited) localStorage.setItem('v_' + c.iso3, 'true');
+                else localStorage.removeItem('v_' + c.iso3);
+                if (c.capitalVisited) localStorage.setItem('cv_' + c.iso3, 'true');
+                else localStorage.removeItem('cv_' + c.iso3);
+                if (c.year) localStorage.setItem('y_' + c.iso3, String(c.year));
+                else localStorage.removeItem('y_' + c.iso3);
             });
         } else {
             // No cloud data yet — push current localStorage data to cloud as initial state
