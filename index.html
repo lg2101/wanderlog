@@ -758,6 +758,11 @@
             <div class="stat-number"><span id="continentCount">0</span><span class="stat-divider-slash">/</span><span class="stat-total">7</span></div>
             <div class="stat-label">Continents</div>
         </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number"><span id="capitalsVisited">0</span><span class="stat-divider-slash">/</span><span class="stat-total" id="capitalsTotal">0</span></div>
+            <div class="stat-label">Capitals · <span id="capitalsPercent">0%</span></div>
+        </div>
     </div>
 
     <div class="un-toggle">
@@ -949,7 +954,6 @@
                         <span class="photo-upload-icon">📁</span>
                         <span>Upload photos from your device</span>
                     </button>
-                    <div class="photo-upload-hint">Up to 25 photos · JPG, PNG, HEIC · Stored in the cloud · Visible in shared profile</div>
                     <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotoUpload(event)">
                 </div>
             </div>
@@ -1247,6 +1251,12 @@ function updateStats() {
     // Continents (using TCC list since it has the broadest set, max 7)
     const continents = new Set(tccList.filter(c => c.visited).map(c => c.continent));
 
+    // Capitals (TCC entries that have a real capital in our lookup)
+    const tccWithCapitals = tccList.filter(c => CAPITALS[c.iso3] && CAPITALS[c.iso3] !== '—');
+    const capitalsTotal = tccWithCapitals.length;
+    const capitalsVisited = tccWithCapitals.filter(c => c.capitalVisited).length;
+    const capitalsPercent = capitalsTotal > 0 ? Math.round((capitalsVisited / capitalsTotal) * 100) : 0;
+
     document.getElementById('unVisited').textContent = unVisited;
     document.getElementById('unPercent').textContent = unPercent + '%';
     document.getElementById('unPlusVisited').textContent = unPlusVisited;
@@ -1254,6 +1264,9 @@ function updateStats() {
     document.getElementById('tccVisited').textContent = tccVisited;
     document.getElementById('tccPercent').textContent = tccPercent + '%';
     document.getElementById('continentCount').textContent = continents.size;
+    document.getElementById('capitalsVisited').textContent = capitalsVisited;
+    document.getElementById('capitalsTotal').textContent = capitalsTotal;
+    document.getElementById('capitalsPercent').textContent = capitalsPercent + '%';
 }
 
 // Helper: which entries are currently filtered in
@@ -1419,6 +1432,7 @@ function toggleCapitalVisited() {
     document.getElementById('capitalToggle').classList.toggle('on', country.capitalVisited);
     document.getElementById('capitalRow').classList.toggle('on', country.capitalVisited);
     document.getElementById('capitalMarkStatus').textContent = country.capitalVisited ? '✓ Been there' : 'Not yet';
+    updateStats();
     if (typeof scheduleCloudSave === 'function') scheduleCloudSave();
 }
 
@@ -1460,7 +1474,7 @@ function renderPhotos() {
             html += '<div class="photo-cell"' + draggable + ' onclick="openLightbox(\'' + p.src.replace(/'/g, "\\'") + '\')"><img src="' + p.src + '" onerror="this.parentElement.style.display=\'none\'">' + handle + removeBtn + '</div>';
         });
         if (allPhotos.length < 25) {
-            html += '<div class="photo-add" onclick="document.getElementById(\'photoInput\').click()"><span class="photo-add-icon">+</span><span>Add</span></div>';
+            html += '<div class="photo-add" onclick="document.getElementById(\'photoInput\').click()"><span class="photo-add-icon">+</span></div>';
         }
         grid.innerHTML = html;
         wirePhotoDragDrop();
