@@ -273,9 +273,10 @@
         .detail-hero { position: relative; height: 180px; overflow: hidden; flex-shrink: 0; }
         .hero-bg { position: absolute; inset: 0; background: linear-gradient(135deg, var(--tcdeep), var(--tl)); }
         .hero-gradient { position: absolute; inset: 0; background: linear-gradient(to top, rgba(18,16,14,0.92) 0%, transparent 70%); }
-        .hero-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 22px; z-index: 2; }
-        .hero-flag { font-size: 1.8rem; margin-bottom: 4px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
-        .hero-name { font-family: 'Fraunces', serif; font-size: 1.7rem; font-weight: 700; color: var(--cr); line-height: 1.1; }
+        .hero-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 22px; z-index: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+        .hero-text { flex: 1; min-width: 0; }
+        .hero-flag { font-size: 2.6rem; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); line-height: 1; align-self: center; }
+        .hero-name { font-family: 'Fraunces', serif; font-size: 1.7rem; font-weight: 700; color: var(--cr); line-height: 1.1; word-wrap: break-word; }
         .hero-continent { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(245,240,232,0.55); margin-top: 4px; font-weight: 500; }
         .detail-close { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: var(--cr); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 0.9rem; z-index: 3; display: flex; align-items: center; justify-content: center; }
 
@@ -287,19 +288,45 @@
 
         .section-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(245,240,232,0.4); font-weight: 600; margin-bottom: 10px; }
 
-        .detail-actions { display: flex; gap: 10px; margin-bottom: 22px; }
-        .action-btn { flex: 1; padding: 12px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; font-family: 'Manrope', sans-serif; }
-        .btn-visited { background: var(--tc); color: var(--cr); border-color: var(--tcd); }
-        .btn-visited:hover { background: var(--tcd); }
-        .btn-visited.active { box-shadow: 0 0 0 3px rgba(212,168,75,0.4); border-color: var(--gd); }
-        /* Category-tinted action button */
-        .detail-panel.cat-unplus .btn-visited { background: var(--tl); border-color: #C97A3E; }
-        .detail-panel.cat-unplus .btn-visited:hover { background: #C97A3E; }
-        .detail-panel.cat-tcc .btn-visited { background: var(--gd); border-color: #a07c30; color: var(--ch); }
-        .detail-panel.cat-tcc .btn-visited:hover { background: #a07c30; color: var(--cr); }
-        .btn-not-visited { background: rgba(255,255,255,0.06); color: rgba(245,240,232,0.75); border-color: rgba(255,255,255,0.12); }
-        .btn-not-visited:hover { background: rgba(255,255,255,0.12); color: var(--cr); }
-        .btn-not-visited.active { background: rgba(255,255,255,0.15); border-color: rgba(245,240,232,0.4); color: var(--cr); }
+        /* Bigger version of the sidebar toggle, used in detail panel */
+        .visit-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+            margin-bottom: 22px; transition: all 0.2s;
+        }
+        .visit-row:hover { background: rgba(255,255,255,0.06); }
+        .visit-row-label { font-size: 0.95rem; font-weight: 500; color: var(--cr); display: flex; align-items: center; gap: 10px; }
+        .visit-row-status { font-size: 0.72rem; color: rgba(245,240,232,0.5); font-weight: 500; }
+        .visit-row.on .visit-row-status { color: var(--tcl); }
+        .detail-panel.cat-unplus .visit-row.on .visit-row-status { color: var(--tl); }
+        .detail-panel.cat-tcc .visit-row.on .visit-row-status { color: var(--gd); }
+        .big-toggle {
+            width: 52px; height: 28px; border-radius: 16px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer; position: relative; flex-shrink: 0; padding: 0;
+            transition: all 0.2s;
+        }
+        .big-toggle::after {
+            content: ""; position: absolute; top: 2px; left: 2px;
+            width: 22px; height: 22px; border-radius: 50%;
+            background: rgba(245,240,232,0.7);
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .big-toggle.on { background: var(--tc); border-color: var(--tcd); box-shadow: 0 0 10px rgba(184,84,32,0.4); }
+        .big-toggle.on::after { left: 26px; background: var(--cr); }
+        .detail-panel.cat-unplus .big-toggle.on { background: var(--tl); border-color: #C97A3E; box-shadow: 0 0 10px rgba(237,150,88,0.4); }
+        .detail-panel.cat-tcc .big-toggle.on { background: var(--gd); border-color: #a07c30; box-shadow: 0 0 10px rgba(212,168,75,0.45); }
+
+        .info-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        .info-row-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,240,232,0.45); font-weight: 600; }
+        .info-row-value { font-family: 'Fraunces', serif; font-size: 1rem; font-style: italic; color: var(--cr); font-weight: 500; }
 
         .form-row { margin-bottom: 16px; }
         .form-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,240,232,0.4); font-weight: 600; margin-bottom: 6px; display: block; }
@@ -359,11 +386,32 @@
             font-style: italic;
         }
 
-        /* LIGHTBOX */
-        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 40px; }
+        /* LIGHTBOX SLIDESHOW */
+        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.94); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 60px 80px; }
         .lightbox.open { display: flex; }
-        .lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
-        .lightbox-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.15); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; }
+        .lightbox-img-wrap { max-width: 100%; max-height: 100%; display: flex; align-items: center; justify-content: center; }
+        .lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.6); user-select: none; }
+        .lightbox-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.12); border: none; color: white; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; transition: background 0.15s; z-index: 2; }
+        .lightbox-close:hover { background: rgba(255,255,255,0.22); }
+        .lightbox-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.1); border: none; color: white;
+            width: 52px; height: 52px; border-radius: 50%; cursor: pointer;
+            font-size: 1.5rem; transition: background 0.15s; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .lightbox-nav:hover { background: rgba(255,255,255,0.22); }
+        .lightbox-prev { left: 24px; }
+        .lightbox-next { right: 24px; }
+        .lightbox-nav.hidden { display: none; }
+        .lightbox-counter {
+            position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: rgba(245,240,232,0.85);
+            padding: 6px 14px; border-radius: 16px; font-size: 0.78rem;
+            font-weight: 500; backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.08); z-index: 2;
+        }
 
         /* ─── AUTH UI ─── */
         .auth-area { display: flex; align-items: center; gap: 10px; }
@@ -838,9 +886,11 @@
                 <div class="hero-bg" id="heroBg"></div>
                 <div class="hero-gradient"></div>
                 <div class="hero-info">
+                    <div class="hero-text">
+                        <div class="hero-name" id="heroName">Country</div>
+                        <div class="hero-continent" id="heroContinent">Continent</div>
+                    </div>
                     <div class="hero-flag" id="heroFlag">🌍</div>
-                    <div class="hero-name" id="heroName">Country</div>
-                    <div class="hero-continent" id="heroContinent">Continent</div>
                 </div>
                 <button class="detail-close" onclick="closePanel()">✕</button>
             </div>
@@ -848,20 +898,24 @@
             <div class="detail-body">
                 <div id="statusBadge" class="status-badge badge-not">Not yet visited</div>
 
-                <div class="section-label">Status</div>
-                <div class="detail-actions">
-                    <button class="action-btn btn-visited" id="btnVisited" onclick="markVisited()">✓ Visited</button>
-                    <button class="action-btn btn-not-visited active" id="btnNotVisited" onclick="markNotVisited()">Not Yet</button>
+                <div class="visit-row" id="visitRow" onclick="toggleVisited(currentCountryIso3)">
+                    <div class="visit-row-label">
+                        <span>Mark as visited</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span class="visit-row-status" id="visitRowStatus">Not yet</span>
+                        <button class="big-toggle" id="visitToggle" type="button" aria-label="Toggle visited"></button>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-row-label">Capital</span>
+                    <span class="info-row-value" id="capitalValue">—</span>
                 </div>
 
                 <div class="form-row">
                     <label class="form-label">Year of first visit</label>
                     <input type="number" class="form-input" id="yearInput" min="1900" max="2099" placeholder="e.g. 2018" onchange="updateYear()">
-                </div>
-
-                <div class="form-row">
-                    <label class="form-label">Notes</label>
-                    <textarea class="form-textarea" id="notesInput" placeholder="Memories, highlights, recommendations..." onchange="updateNotes()"></textarea>
                 </div>
 
                 <div class="photo-section">
@@ -882,9 +936,14 @@
     </div>
 </div>
 
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-    <img id="lightboxImg" src="" alt="">
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+    <button class="lightbox-close" onclick="closeLightbox(event)">✕</button>
+    <button class="lightbox-nav lightbox-prev" id="lightboxPrev" onclick="lightboxNav(event,-1)">‹</button>
+    <button class="lightbox-nav lightbox-next" id="lightboxNext" onclick="lightboxNav(event,1)">›</button>
+    <div class="lightbox-img-wrap" onclick="event.stopPropagation()">
+        <img id="lightboxImg" src="" alt="">
+    </div>
+    <div class="lightbox-counter" id="lightboxCounter" style="display:none">1 / 1</div>
 </div>
 
 <!-- ─── FIREBASE INITIALIZATION ─── -->
@@ -958,6 +1017,69 @@ try {
 <script>
 const CLOUDINARY_CLOUD = 'dg7hj1csb';
 const CLOUDINARY_PRESET = 'wanderlog_unsigned';
+
+// Country capitals lookup by iso3 (UN 193 + territories with their own seat of government)
+const CAPITALS = {
+    AFG:'Kabul', ALB:'Tirana', DZA:'Algiers', AND:'Andorra la Vella', AGO:'Luanda',
+    ATG:"St. John's", ARG:'Buenos Aires', ARM:'Yerevan', AUS:'Canberra', AUT:'Vienna',
+    AZE:'Baku', BHS:'Nassau', BHR:'Manama', BGD:'Dhaka', BRB:'Bridgetown',
+    BLR:'Minsk', BEL:'Brussels', BLZ:'Belmopan', BEN:'Porto-Novo', BTN:'Thimphu',
+    BOL:'La Paz / Sucre', BIH:'Sarajevo', BWA:'Gaborone', BRA:'Brasília', BRN:'Bandar Seri Begawan',
+    BGR:'Sofia', BFA:'Ouagadougou', BDI:'Gitega', CPV:'Praia', KHM:'Phnom Penh',
+    CMR:'Yaoundé', CAN:'Ottawa', CAF:'Bangui', TCD:"N'Djamena", CHL:'Santiago',
+    CHN:'Beijing', COL:'Bogotá', COM:'Moroni', COG:'Brazzaville', COD:'Kinshasa',
+    CRI:'San José', HRV:'Zagreb', CUB:'Havana', CYP:'Nicosia', CZE:'Prague',
+    DNK:'Copenhagen', DJI:'Djibouti', DMA:'Roseau', DOM:'Santo Domingo', ECU:'Quito',
+    EGY:'Cairo', SLV:'San Salvador', GNQ:'Malabo', ERI:'Asmara', EST:'Tallinn',
+    SWZ:'Mbabane', ETH:'Addis Ababa', FJI:'Suva', FIN:'Helsinki', FRA:'Paris',
+    GAB:'Libreville', GMB:'Banjul', GEO:'Tbilisi', DEU:'Berlin', GHA:'Accra',
+    GRC:'Athens', GRD:"St. George's", GTM:'Guatemala City', GIN:'Conakry', GNB:'Bissau',
+    GUY:'Georgetown', HTI:'Port-au-Prince', HND:'Tegucigalpa', HUN:'Budapest', ISL:'Reykjavík',
+    IND:'New Delhi', IDN:'Jakarta', IRN:'Tehran', IRQ:'Baghdad', IRL:'Dublin',
+    ISR:'Jerusalem', ITA:'Rome', CIV:'Yamoussoukro', JAM:'Kingston', JPN:'Tokyo',
+    JOR:'Amman', KAZ:'Astana', KEN:'Nairobi', KIR:'Tarawa', PRK:'Pyongyang',
+    KOR:'Seoul', KWT:'Kuwait City', KGZ:'Bishkek', LAO:'Vientiane', LVA:'Riga',
+    LBN:'Beirut', LSO:'Maseru', LBR:'Monrovia', LBY:'Tripoli', LIE:'Vaduz',
+    LTU:'Vilnius', LUX:'Luxembourg', MDG:'Antananarivo', MWI:'Lilongwe', MYS:'Kuala Lumpur',
+    MDV:'Malé', MLI:'Bamako', MLT:'Valletta', MHL:'Majuro', MRT:'Nouakchott',
+    MUS:'Port Louis', MEX:'Mexico City', FSM:'Palikir', MDA:'Chișinău', MCO:'Monaco',
+    MNG:'Ulaanbaatar', MNE:'Podgorica', MAR:'Rabat', MOZ:'Maputo', MMR:'Naypyidaw',
+    NAM:'Windhoek', NRU:'Yaren', NPL:'Kathmandu', NLD:'Amsterdam', NZL:'Wellington',
+    NIC:'Managua', NER:'Niamey', NGA:'Abuja', MKD:'Skopje', NOR:'Oslo',
+    OMN:'Muscat', PAK:'Islamabad', PLW:'Ngerulmud', PAN:'Panama City', PNG:'Port Moresby',
+    PRY:'Asunción', PER:'Lima', PHL:'Manila', POL:'Warsaw', PRT:'Lisbon',
+    QAT:'Doha', ROU:'Bucharest', RUS:'Moscow', RWA:'Kigali', KNA:'Basseterre',
+    LCA:'Castries', VCT:'Kingstown', WSM:'Apia', SMR:'San Marino', STP:'São Tomé',
+    SAU:'Riyadh', SEN:'Dakar', SRB:'Belgrade', SYC:'Victoria', SLE:'Freetown',
+    SGP:'Singapore', SVK:'Bratislava', SVN:'Ljubljana', SLB:'Honiara', SOM:'Mogadishu',
+    ZAF:'Pretoria', SSD:'Juba', ESP:'Madrid', LKA:'Sri Jayawardenepura Kotte', SDN:'Khartoum',
+    SUR:'Paramaribo', SWE:'Stockholm', CHE:'Bern', SYR:'Damascus', TJK:'Dushanbe',
+    TZA:'Dodoma', THA:'Bangkok', TLS:'Dili', TGO:'Lomé', TON:"Nuku'alofa",
+    TTO:'Port of Spain', TUN:'Tunis', TUR:'Ankara', TKM:'Ashgabat', TUV:'Funafuti',
+    UGA:'Kampala', UKR:'Kyiv', ARE:'Abu Dhabi', GBR:'London', USA:'Washington, D.C.',
+    URY:'Montevideo', UZB:'Tashkent', VUT:'Port Vila', VEN:'Caracas', VNM:'Hanoi',
+    YEM:"Sana'a", ZMB:'Lusaka', ZWE:'Harare', VAT:'Vatican City', PSE:'Ramallah',
+    XKX:'Pristina', TWN:'Taipei', HKG:'Hong Kong', MAC:'Macau',
+    // UN+ / TCC territories
+    ABK:'Sukhumi', OSE:'Tskhinvali', TRS:'Tiraspol', SOL:'Hargeisa', NCY:'North Nicosia',
+    GRL:'Nuuk', FRO:'Tórshavn', GIB:'Gibraltar', IMN:'Douglas', JEY:'Saint Helier',
+    GGY:'Saint Peter Port', BMU:'Hamilton', CYM:'George Town', TCA:'Cockburn Town', VGB:'Road Town',
+    AIA:'The Valley', MSR:'Brades', FLK:'Stanley', SHN:'Jamestown', PRI:'San Juan',
+    VIR:'Charlotte Amalie', GUM:'Hagåtña', ASM:'Pago Pago', MNP:'Saipan', ABW:'Oranjestad',
+    CUW:'Willemstad', SXM:'Philipsburg', BON:'Kralendijk', SEU:'The Bottom', SAB:'The Bottom',
+    PYF:'Papeete', NCL:'Nouméa', MTQ:'Fort-de-France', GLP:'Basse-Terre', REU:'Saint-Denis',
+    MYT:'Mamoudzou', SPM:'Saint-Pierre', GUF:'Cayenne', WLF:'Mata-Utu', MAF:'Marigot',
+    BLM:'Gustavia', COK:'Avarua', NIU:'Alofi', TKL:'—', NFK:'Kingston',
+    CXR:'Flying Fish Cove', CCK:'West Island', PCN:'Adamstown', ESH:'El Aaiún', ATA:'—',
+    SJM:'Longyearbyen', ASC:'Georgetown', TAA:'Edinburgh of the Seven Seas',
+    ALD:'Mariehamn', ENG:'London', SCO:'Edinburgh', WLS:'Cardiff', NIR:'Belfast',
+    RSK:'Banja Luka', CRM:'Simferopol', AZO:'Ponta Delgada', MAD:'Funchal',
+    CNR:'Las Palmas / Santa Cruz', BAL:'Palma', COR:'Ajaccio', SIC:'Palermo', SRD:'Cagliari',
+    CRT:'Heraklion', HAW:'Honolulu', GAL:'Puerto Baquerizo Moreno', EAS:'Hanga Roa',
+    TAS:'Hobart', ZNZ:'Zanzibar City', SOC:'Hadibo', IOT:'Diego Garcia',
+    BIHF:'Sarajevo', NLL:'Philipsburg',
+    AAA:'—', AAT:'—', SGS:'—'
+};
 
 let data = { countries: {} };
 let currentCountryIso3 = null;
@@ -1186,8 +1308,12 @@ function openPanel(iso3) {
     const cat = country.inUN ? 'cat-un' : (country.inUNPlus ? 'cat-unplus' : 'cat-tcc');
     panel.classList.add(cat);
 
-    document.getElementById('btnVisited').classList.toggle('active', country.visited);
-    document.getElementById('btnNotVisited').classList.toggle('active', !country.visited);
+    const toggle = document.getElementById('visitToggle');
+    const visitRow = document.getElementById('visitRow');
+    const visitStatus = document.getElementById('visitRowStatus');
+    toggle.classList.toggle('on', !!country.visited);
+    visitRow.classList.toggle('on', !!country.visited);
+    visitStatus.textContent = country.visited ? '✓ Visited' : 'Not yet';
 
     const badge = document.getElementById('statusBadge');
     if (country.visited) {
@@ -1199,7 +1325,7 @@ function openPanel(iso3) {
     }
 
     document.getElementById('yearInput').value = country.year || '';
-    document.getElementById('notesInput').value = country.notes || '';
+    document.getElementById('capitalValue').textContent = CAPITALS[country.iso3] || '—';
 
     renderPhotos();
     document.getElementById('detailPanel').classList.add('open');
@@ -1247,14 +1373,6 @@ function updateYear() {
     data.countries[currentCountryIso3].year = val ? parseInt(val) : null;
     if (val) localStorage.setItem('y_' + currentCountryIso3, val);
     else localStorage.removeItem('y_' + currentCountryIso3);
-}
-
-function updateNotes() {
-    if (!currentCountryIso3) return;
-    const val = document.getElementById('notesInput').value;
-    data.countries[currentCountryIso3].notes = val;
-    if (val) localStorage.setItem('n_' + currentCountryIso3, val);
-    else localStorage.removeItem('n_' + currentCountryIso3);
 }
 
 function refreshAll() {
@@ -1383,13 +1501,59 @@ function removePhoto(type, index) {
     renderPhotos();
 }
 
+let lightboxPhotos = [];
+let lightboxIndex = 0;
+
 function openLightbox(src) {
-    document.getElementById('lightboxImg').src = src;
+    // Build photo list from currently-open country panel so we can navigate
+    lightboxPhotos = [];
+    if (currentCountryIso3) {
+        const country = data.countries[currentCountryIso3];
+        const repo  = (country.photos      || []).map(name => 'photos/' + country.iso3 + '/' + name);
+        const cloud = (country.cloudPhotos || []).slice();
+        const local = (country.localPhotos || []).slice();
+        lightboxPhotos = repo.concat(cloud).concat(local);
+    }
+    lightboxIndex = Math.max(0, lightboxPhotos.indexOf(src));
+    if (lightboxPhotos.length === 0) lightboxPhotos = [src];
+    renderLightbox();
     document.getElementById('lightbox').classList.add('open');
 }
-function closeLightbox() {
+
+function renderLightbox() {
+    const src = lightboxPhotos[lightboxIndex];
+    document.getElementById('lightboxImg').src = src;
+    const counter = document.getElementById('lightboxCounter');
+    if (lightboxPhotos.length > 1) {
+        counter.textContent = (lightboxIndex + 1) + ' / ' + lightboxPhotos.length;
+        counter.style.display = 'block';
+        document.getElementById('lightboxPrev').classList.remove('hidden');
+        document.getElementById('lightboxNext').classList.remove('hidden');
+    } else {
+        counter.style.display = 'none';
+        document.getElementById('lightboxPrev').classList.add('hidden');
+        document.getElementById('lightboxNext').classList.add('hidden');
+    }
+}
+
+function lightboxNav(event, dir) {
+    if (event) event.stopPropagation();
+    if (lightboxPhotos.length === 0) return;
+    lightboxIndex = (lightboxIndex + dir + lightboxPhotos.length) % lightboxPhotos.length;
+    renderLightbox();
+}
+
+function closeLightbox(event) {
+    if (event && event.target.closest('.lightbox-img-wrap')) return; // click on image — don't close
     document.getElementById('lightbox').classList.remove('open');
 }
+
+document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('lightbox').classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') lightboxNav(null, -1);
+    else if (e.key === 'ArrowRight') lightboxNav(null, 1);
+});
 
 // ─── MAP ───────────────────────────────────────────────
 async function loadMap() {
@@ -2239,11 +2403,10 @@ function buildCountryPayload() {
     const out = {};
     Object.values(data.countries).forEach(c => {
         const hasPhotos = c.cloudPhotos && c.cloudPhotos.length > 0;
-        if (c.visited || c.year || (c.notes && c.notes.length > 0) || hasPhotos) {
+        if (c.visited || c.year || hasPhotos) {
             out[c.iso3] = {
                 visited: !!c.visited,
                 year: c.year || null,
-                notes: c.notes || '',
                 photos: c.cloudPhotos || []
             };
         }
@@ -2295,11 +2458,6 @@ markNotVisited = function() {
 const _origUpdateYear = updateYear;
 updateYear = function() {
     _origUpdateYear.apply(this, arguments);
-    scheduleCloudSave();
-};
-const _origUpdateNotes = updateNotes;
-updateNotes = function() {
-    _origUpdateNotes.apply(this, arguments);
     scheduleCloudSave();
 };
 
