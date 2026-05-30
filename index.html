@@ -759,6 +759,17 @@
         }
         .sidebar-backdrop.open { display: block; }
 
+        /* Mobile toolbar — sits between header and map. Holds stats row + selection buttons row. */
+        .mobile-bar {
+            display: none;
+            flex-direction: column;
+            background: rgba(18, 16, 14, 0.97);
+            border-bottom: 1px solid rgba(212, 168, 75, 0.18);
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        .mobile-bar.active { display: flex; }
+
         @media (max-width: 768px) {
             header {
                 padding: 0 12px;
@@ -768,35 +779,81 @@
             .logo { font-size: 1.2rem; }
             .menu-btn { display: inline-flex; }
 
-            /* Compact stats: horizontal scroll, smaller text */
-            .header-stats {
+            /* Stats become a horizontally scrollable row inside the mobile bar */
+            .mobile-bar .header-stats {
+                display: flex;
                 gap: 10px;
                 overflow-x: auto;
-                flex-shrink: 1;
-                min-width: 0;
+                padding: 8px 12px;
                 scrollbar-width: none;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                width: 100%;
+                min-width: 0;
             }
-            .header-stats::-webkit-scrollbar { display: none; }
-            .stat-number { font-size: 1.1rem; }
-            .stat-label { font-size: 0.5rem; letter-spacing: 0.08em; }
-            .stat-divider { height: 18px; }
+            .mobile-bar .header-stats::-webkit-scrollbar { display: none; }
+            .mobile-bar .stat-number { font-size: 0.95rem; white-space: nowrap; }
+            .mobile-bar .stat-label { font-size: 0.5rem; letter-spacing: 0.08em; white-space: nowrap; }
+            .mobile-bar .stat-divider { height: 16px; }
 
-            /* Category toggle: move out of header, position as compact strip
-               at top of map area so users can still switch UN/UN+/TCC */
-            .un-toggle {
-                position: absolute;
-                top: 66px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 90;
-                gap: 5px;
-                background: rgba(16,14,12,0.92);
-                border: 1px solid rgba(212,168,75,0.2);
-                border-radius: 18px;
-                padding: 4px;
-                backdrop-filter: blur(8px);
+            /* Selection buttons row: holds un-toggle, map-controls, map-legend inline */
+            .mobile-controls-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 10px;
+                overflow-x: auto;
+                scrollbar-width: none;
+                min-height: 44px;
             }
-            .un-btn { padding: 5px 10px; font-size: 0.66rem; }
+            .mobile-controls-row::-webkit-scrollbar { display: none; }
+
+            /* When inside mobile bar — reset absolute positioning, use inline static layout */
+            .mobile-bar .un-toggle,
+            .mobile-bar .map-controls,
+            .mobile-bar .map-legend {
+                position: static;
+                transform: none;
+                top: auto;
+                bottom: auto;
+                left: auto;
+                right: auto;
+                flex-shrink: 0;
+            }
+            .mobile-bar .un-toggle { gap: 4px; background: none; border: none; padding: 0; backdrop-filter: none; }
+            .mobile-bar .un-btn { padding: 5px 9px; font-size: 0.66rem; }
+
+            .mobile-bar .map-controls {
+                flex-direction: row;
+                gap: 6px;
+            }
+            .mobile-bar .map-controls .control-group { display: flex; }
+            .mobile-bar .control-btn { padding: 5px 9px; font-size: 0.66rem; min-width: 30px; }
+
+            .mobile-bar .map-legend {
+                background: none;
+                border: none;
+                padding: 0;
+                backdrop-filter: none;
+                display: flex;
+                gap: 6px;
+                align-items: center;
+            }
+            .mobile-bar .legend-title { display: none; }
+            .mobile-bar .legend-row {
+                font-size: 0.62rem;
+                padding: 4px 8px;
+                margin: 0;
+                background: rgba(255,255,255,0.04);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 14px;
+            }
+            .mobile-bar .legend-row.muted { opacity: 0.5; }
+
+            /* Hide header-stats while empty in original header location */
+            header > .header-stats { display: none; }
+
+            /* Region shortcuts stay absolute at bottom */
+            .un-toggle, .map-controls, .map-legend, .header-stats { /* originals when NOT in bar are positioned by their existing rules */ }
 
             /* Hide sign-in text in chip / shrink auth button */
             .signin-btn { padding: 6px 10px; font-size: 0.7rem; }
@@ -826,14 +883,10 @@
             .hero-flag img { width: 52px; height: 40px; }
             .detail-body { padding: 16px 16px; }
 
-            /* Map controls: shift down to avoid overlapping the un-toggle */
-            .map-controls { top: 122px; right: 12px; gap: 6px; }
-            .control-btn { padding: 7px 10px; font-size: 0.7rem; min-width: 36px; }
-
-            /* Region shortcuts: smaller, allow horizontal scroll, sit just above legend */
+            /* Region shortcuts (stays absolute on map) — smaller, allow scroll, near bottom */
             .region-shortcuts {
                 top: auto;
-                bottom: calc(env(safe-area-inset-bottom, 0px) + 110px);
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
                 left: 50%;
                 font-size: 0.65rem;
                 padding: 4px;
@@ -844,17 +897,6 @@
             }
             .region-shortcuts::-webkit-scrollbar { display: none; }
             .region-btn { padding: 4px 10px; font-size: 0.65rem; }
-
-            /* Legend: smaller, sits above region-shortcuts safely above bottom browser UI */
-            .map-legend {
-                bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
-                left: 12px;
-                padding: 7px 11px;
-                font-size: 0.66rem;
-            }
-            .legend-title { font-size: 0.48rem; margin-bottom: 4px; }
-            .legend-row { font-size: 0.62rem; gap: 5px; margin-bottom: 2px; padding: 1px 4px; }
-            .legend-swatch { width: 10px; height: 10px; }
 
             /* Lightbox: less padding, bigger nav buttons */
             .lightbox { padding: 30px 12px; }
@@ -872,11 +914,8 @@
         }
 
         @media (max-width: 480px) {
-            /* Keep all stats visible — let header-stats scroll horizontally */
-            .header-stats { gap: 8px; padding-right: 4px; }
-            .stat-number { font-size: 0.95rem; }
-            .stat-label { font-size: 0.45rem; }
-            .stat-divider { height: 16px; }
+            .mobile-bar .stat-number { font-size: 0.88rem; }
+            .mobile-bar .stat-label { font-size: 0.45rem; }
             .logo { font-size: 1.1rem; }
         }
     </style>
@@ -1003,6 +1042,9 @@
 </div>
 
 <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+<!-- Mobile: stats and selection buttons land here -->
+<div class="mobile-bar" id="mobileBar"></div>
 
 <div class="main-layout">
     <div class="sidebar" id="sidebar">
@@ -2773,8 +2815,50 @@ updateYear = function() {
 };
 
 // ─── INIT FLOW ────────────────────────────────────────
+// ─── MOBILE BAR LAYOUT ─────────────────────────────────
+// On mobile, move stats + selection buttons (un-toggle / map-controls / map-legend)
+// from their desktop positions into a single bar between header and map.
+function arrangeMobileBar() {
+    const bar = document.getElementById('mobileBar');
+    if (!bar) return;
+    const isMobile = window.innerWidth <= 768;
+    const header = document.querySelector('header');
+    const authArea = document.getElementById('authArea');
+    const mapContainer = document.getElementById('mapContainer');
+    const headerStats = document.querySelector('.header-stats');
+    const unToggle = document.querySelector('.un-toggle');
+    const mapControls = document.querySelector('.map-controls');
+    const mapLegend = document.querySelector('.map-legend');
+
+    if (isMobile) {
+        bar.classList.add('active');
+        // Build controls row if missing
+        let ctrlRow = bar.querySelector('.mobile-controls-row');
+        if (!ctrlRow) {
+            ctrlRow = document.createElement('div');
+            ctrlRow.className = 'mobile-controls-row';
+            bar.appendChild(ctrlRow);
+        }
+        // Stats sit at top of bar (row 1)
+        if (headerStats && headerStats.parentElement !== bar) bar.insertBefore(headerStats, ctrlRow);
+        // Selection buttons sit in the controls row (row 2)
+        if (unToggle && unToggle.parentElement !== ctrlRow) ctrlRow.appendChild(unToggle);
+        if (mapControls && mapControls.parentElement !== ctrlRow) ctrlRow.appendChild(mapControls);
+        if (mapLegend && mapLegend.parentElement !== ctrlRow) ctrlRow.appendChild(mapLegend);
+    } else {
+        bar.classList.remove('active');
+        // Move everything back to original positions
+        if (headerStats && headerStats.parentElement !== header) header.insertBefore(headerStats, authArea);
+        if (unToggle && unToggle.parentElement !== header) header.insertBefore(unToggle, authArea);
+        if (mapControls && mapControls.parentElement !== mapContainer) mapContainer.appendChild(mapControls);
+        if (mapLegend && mapLegend.parentElement !== mapContainer) mapContainer.appendChild(mapLegend);
+    }
+}
+
 async function init() {
     await loadData();  // load static country list + map
+    arrangeMobileBar();
+    window.addEventListener('resize', arrangeMobileBar);
     // Check if URL has ?u=<uid> for viewing someone's public profile
     const params = new URLSearchParams(window.location.search);
     const viewUid = params.get('u');
