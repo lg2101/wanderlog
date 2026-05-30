@@ -781,8 +781,22 @@
             .stat-label { font-size: 0.5rem; letter-spacing: 0.08em; }
             .stat-divider { height: 18px; }
 
-            /* Hide category toggle (use legend/sidebar instead) */
-            .un-toggle { display: none; }
+            /* Category toggle: move out of header, position as compact strip
+               at top of map area so users can still switch UN/UN+/TCC */
+            .un-toggle {
+                position: absolute;
+                top: 66px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 90;
+                gap: 5px;
+                background: rgba(16,14,12,0.92);
+                border: 1px solid rgba(212,168,75,0.2);
+                border-radius: 18px;
+                padding: 4px;
+                backdrop-filter: blur(8px);
+            }
+            .un-btn { padding: 5px 10px; font-size: 0.66rem; }
 
             /* Hide sign-in text in chip / shrink auth button */
             .signin-btn { padding: 6px 10px; font-size: 0.7rem; }
@@ -812,8 +826,8 @@
             .hero-flag img { width: 52px; height: 40px; }
             .detail-body { padding: 16px 16px; }
 
-            /* Map controls: more compact in top-right */
-            .map-controls { top: 12px; right: 12px; gap: 6px; }
+            /* Map controls: shift down to avoid overlapping the un-toggle */
+            .map-controls { top: 122px; right: 12px; gap: 6px; }
             .control-btn { padding: 7px 10px; font-size: 0.7rem; min-width: 36px; }
 
             /* Region shortcuts: smaller, allow wrap */
