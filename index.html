@@ -795,17 +795,17 @@
             .mobile-bar .stat-label { font-size: 0.5rem; letter-spacing: 0.08em; white-space: nowrap; }
             .mobile-bar .stat-divider { height: 16px; }
 
-            /* Selection buttons row: holds un-toggle, map-controls, map-legend inline */
+            /* Selection buttons row: wraps onto a second line if it doesn't fit */
             .mobile-controls-row {
                 display: flex;
+                flex-wrap: wrap;
                 align-items: center;
-                gap: 8px;
+                justify-content: center;
+                row-gap: 6px;
+                column-gap: 8px;
                 padding: 6px 10px;
-                overflow-x: auto;
-                scrollbar-width: none;
                 min-height: 44px;
             }
-            .mobile-controls-row::-webkit-scrollbar { display: none; }
 
             /* When inside mobile bar — reset absolute positioning, use inline static layout */
             .mobile-bar .un-toggle,
@@ -819,15 +819,18 @@
                 right: auto;
                 flex-shrink: 0;
             }
-            .mobile-bar .un-toggle { gap: 4px; background: none; border: none; padding: 0; backdrop-filter: none; }
-            .mobile-bar .un-btn { padding: 5px 9px; font-size: 0.66rem; }
+            .mobile-bar .un-toggle { gap: 3px; background: none; border: none; padding: 0; backdrop-filter: none; }
+            .mobile-bar .un-btn { padding: 4px 7px; font-size: 0.62rem; }
 
             .mobile-bar .map-controls {
                 flex-direction: row;
-                gap: 6px;
+                gap: 4px;
             }
             .mobile-bar .map-controls .control-group { display: flex; }
-            .mobile-bar .control-btn { padding: 5px 9px; font-size: 0.66rem; min-width: 30px; }
+            .mobile-bar .control-btn { padding: 4px 7px; font-size: 0.62rem; min-width: 26px; }
+            .mobile-bar .control-btn.icon-btn { padding: 2px 6px; font-size: 0.85rem; }
+            /* Shorter label on mobile so the button doesn't dominate the row */
+            .mobile-bar #smallToggleBtn { font-size: 0.6rem; }
 
             .mobile-bar .map-legend {
                 background: none;
@@ -835,19 +838,21 @@
                 padding: 0;
                 backdrop-filter: none;
                 display: flex;
-                gap: 6px;
+                gap: 4px;
                 align-items: center;
             }
             .mobile-bar .legend-title { display: none; }
             .mobile-bar .legend-row {
-                font-size: 0.62rem;
-                padding: 4px 8px;
+                font-size: 0.6rem;
+                padding: 3px 7px;
                 margin: 0;
                 background: rgba(255,255,255,0.04);
                 border: 1px solid rgba(255,255,255,0.08);
                 border-radius: 14px;
             }
             .mobile-bar .legend-row.muted { opacity: 0.5; }
+            .mobile-bar .legend-swatch { width: 9px; height: 9px; }
+            .mobile-bar .legend-cross { display: none; }
 
             /* Hide header-stats while empty in original header location */
             header > .header-stats { display: none; }
@@ -1067,8 +1072,8 @@
 
         <div class="map-controls">
             <div class="control-group">
-                <button class="control-btn active" onclick="setProjection('natural', event)">Flat</button>
-                <button class="control-btn" onclick="setProjection('ortho', event)">Globe</button>
+                <button class="control-btn" id="btnFlat" onclick="setProjection('natural', event)">Flat</button>
+                <button class="control-btn" id="btnGlobe" onclick="setProjection('ortho', event)">Globe</button>
             </div>
             <div class="control-group">
                 <button class="control-btn icon-btn" onclick="zoomIn()" title="Zoom in">+</button>
@@ -1313,7 +1318,7 @@ const CAPITALS = {
 
 let data = { countries: {} };
 let currentCountryIso3 = null;
-let projection = 'natural';
+let projection = window.innerWidth <= 768 ? 'ortho' : 'natural';
 let worldData = null;
 let showCat = { un: true, unplus: true, tcc: true };  // which categories visible
 let showVisit = { visited: true, notvisited: true };  // which visit statuses visible
@@ -2856,6 +2861,13 @@ function arrangeMobileBar() {
 }
 
 async function init() {
+    // Set the correct Flat/Globe button active state based on initial projection
+    const flatBtn = document.getElementById('btnFlat');
+    const globeBtn = document.getElementById('btnGlobe');
+    if (flatBtn && globeBtn) {
+        if (projection === 'ortho') globeBtn.classList.add('active');
+        else flatBtn.classList.add('active');
+    }
     await loadData();  // load static country list + map
     arrangeMobileBar();
     window.addEventListener('resize', arrangeMobileBar);
