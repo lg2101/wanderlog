@@ -2868,9 +2868,17 @@ async function init() {
         if (projection === 'ortho') globeBtn.classList.add('active');
         else flatBtn.classList.add('active');
     }
-    await loadData();  // load static country list + map
+    // Set up the mobile bar BEFORE loading the map so the map container
+    // has its final size when renderMap measures it.
     arrangeMobileBar();
-    window.addEventListener('resize', arrangeMobileBar);
+    await loadData();  // load static country list + map
+    // Re-arrange and re-render on viewport change (orientation, browser-chrome show/hide)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        arrangeMobileBar();
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { if (typeof renderMap === 'function') renderMap(); }, 200);
+    });
     // Check if URL has ?u=<uid> for viewing someone's public profile
     const params = new URLSearchParams(window.location.search);
     const viewUid = params.get('u');
