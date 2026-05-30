@@ -17,7 +17,7 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; }
-        body { font-family: 'Manrope', sans-serif; background: var(--ch); color: var(--cr); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { font-family: 'Manrope', sans-serif; background: var(--ch); color: var(--cr); height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
 
         header { display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 58px; background: rgba(18, 16, 14, 0.97); border-bottom: 1px solid rgba(212, 168, 75, 0.18); flex-shrink: 0; z-index: 200; }
         .logo { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 600; font-style: italic; color: var(--cr); letter-spacing: 0.02em; }
@@ -813,7 +813,7 @@
                 box-shadow: 4px 0 20px rgba(0,0,0,0.4);
             }
             .sidebar.open { transform: translateX(0); }
-            .main-layout { display: block; height: calc(100vh - 54px); }
+            .main-layout { display: block; height: calc(100vh - 54px); height: calc(100dvh - 54px); }
             .map-container { width: 100%; height: 100%; }
 
             /* Detail panel: full screen with smaller hero */
@@ -830,10 +830,10 @@
             .map-controls { top: 122px; right: 12px; gap: 6px; }
             .control-btn { padding: 7px 10px; font-size: 0.7rem; min-width: 36px; }
 
-            /* Region shortcuts: smaller, allow wrap */
+            /* Region shortcuts: smaller, allow horizontal scroll, sit just above legend */
             .region-shortcuts {
                 top: auto;
-                bottom: 110px;
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 110px);
                 left: 50%;
                 font-size: 0.65rem;
                 padding: 4px;
@@ -845,10 +845,15 @@
             .region-shortcuts::-webkit-scrollbar { display: none; }
             .region-btn { padding: 4px 10px; font-size: 0.65rem; }
 
-            /* Legend: smaller, stays bottom-left */
-            .map-legend { bottom: 12px; left: 12px; padding: 9px 12px; font-size: 0.7rem; }
-            .legend-title { font-size: 0.5rem; margin-bottom: 6px; }
-            .legend-row { font-size: 0.66rem; gap: 6px; margin-bottom: 3px; }
+            /* Legend: smaller, sits above region-shortcuts safely above bottom browser UI */
+            .map-legend {
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+                left: 12px;
+                padding: 7px 11px;
+                font-size: 0.66rem;
+            }
+            .legend-title { font-size: 0.48rem; margin-bottom: 4px; }
+            .legend-row { font-size: 0.62rem; gap: 5px; margin-bottom: 2px; padding: 1px 4px; }
             .legend-swatch { width: 10px; height: 10px; }
 
             /* Lightbox: less padding, bigger nav buttons */
@@ -867,9 +872,12 @@
         }
 
         @media (max-width: 480px) {
-            /* Show only the most relevant stat (UN) to save space */
-            .stat-item:nth-child(n+3) { display: none; }
-            .stat-divider:nth-child(n+3) { display: none; }
+            /* Keep all stats visible — let header-stats scroll horizontally */
+            .header-stats { gap: 8px; padding-right: 4px; }
+            .stat-number { font-size: 0.95rem; }
+            .stat-label { font-size: 0.45rem; }
+            .stat-divider { height: 16px; }
+            .logo { font-size: 1.1rem; }
         }
     </style>
 </head>
